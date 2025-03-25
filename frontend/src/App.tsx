@@ -1,18 +1,30 @@
+import { Route, Routes } from 'react-router-dom'
 import './App.css'
-import { Button } from './components/ui/button'
+import { publicRoutes } from './routes'
 
 function App() {
 
   return (
-    <>
-      <h1 className="text-3xl font-bold underline">
-        Hello world!
-      </h1>
-      <div className="flex flex-col items-center justify-center min-h-svh">
-        <Button>Click me</Button>
-      </div>
-    </>
-    
+    <div>
+      <Routes>
+        {/* Public Routes */}
+        {publicRoutes.map(({ path, component: Component, layout: Layout }) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              Layout ? (
+                <Layout>
+                  <Component />
+                </Layout>
+              ) : (
+                <Component />
+              )
+            }
+          />
+        ))}
+      </Routes>
+    </div>
   )
 }
 
