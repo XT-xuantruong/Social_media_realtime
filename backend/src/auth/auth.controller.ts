@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { User } from 'src/users/user.entity';
 import { ResponseDto } from 'src/response.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('api/auth')
 export class AuthController {
@@ -18,5 +19,11 @@ export class AuthController {
   @UsePipes(new ValidationPipe())
   async register(@Body() registerDto: RegisterDto): Promise<ResponseDto<User>> {
     return await this.authService.register(registerDto);
+  }
+
+  @Post('login')
+  @UsePipes(new ValidationPipe())
+  async login(@Body() loginDto: LoginDto): Promise<ResponseDto<any>> {
+    return await this.authService.login(loginDto);
   }
 }

@@ -13,6 +13,9 @@ import { JwtService } from '@nestjs/jwt';
 // import { OAuth2Client } from 'google-auth-library';
 import { UsersService } from '../users/users.service';
 import { ResponseDto } from 'src/response.dto';
+import { LoginDto } from './dto/login.dto';
+import * as bcrypt from 'bcrypt';
+import { RefreshToken } from './refresh-token.entity';
 
 @Injectable()
 export class AuthService {
@@ -22,6 +25,8 @@ export class AuthService {
     private usersService: UsersService,
     @InjectRepository(AuthProvider)
     private authProviderRepo: Repository<AuthProvider>,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepo: Repository<RefreshToken>,
     private jwtService: JwtService,
   ) {}
 
@@ -43,16 +48,35 @@ export class AuthService {
     return new ResponseDto<User>('Register successfully!', 200, newUser);
   }
 
-  //   async login(dto: LoginDto): Promise<{ accessToken: string }> {
-  //     const user = await this.userRepository.findOne({
-  //       where: { email: dto.email },
-  //       select: ['user_id', 'password'],
-  //     });
-  //     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
-  //       throw new UnauthorizedException('Email hoặc mật khẩu không đúng');
-  //     }
-  //     return { accessToken: this.jwtService.sign({ user_id: user.user_id }) };
-  //   }
+  async login(dto: LoginDto): Promise<ResponseDto<any>> {
+    const user = await this.usersService.findByEmail(dto.email);
+    console.log(user);
+
+    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+      return new ResponseDto<any>('Email or password not correct!', 401, null);
+    }
+    const accessToken = this.jwtService.sign({
+      user_id: user.id,
+      token_type: 'access',
+    });
+    const refreshToken = this.jwtService.sign(
+      { user_id: user.id, token_type: 'refresh' },
+      {
+        expiresIn: '7d',
+      },
+    );
+    const newRefreshToken = this.refreshTokenRepo.create({
+      user: user,
+      token: refreshToken,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    await this.refreshTokenRepo.save(newRefreshToken);
+    return new ResponseDto<any>('Logged in successfully!', 200, {
+      user,
+      accessToken,
+      refreshToken,
+    });
+  }
 
   //   async googleAuth(token: string) {
   //     const ticket = await this.googleClient.verifyIdToken({
