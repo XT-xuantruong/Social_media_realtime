@@ -43,4 +43,18 @@ export class AuthController {
   async googleAuthRedirect(@Req() req) {
     return await this.authService.googleAuth(req.user);
   }
+
+  @Post('otp/send')
+  @UsePipes(new ValidationPipe())
+  async sendOtp(@Body('email') email: string): Promise<ResponseDto<any>> {
+    return await this.authService.sendOtp(email);
+  }
+
+  @Post('otp/verify')
+  @UsePipes(new ValidationPipe())
+  async verifyOtp(
+    @Body() body: { email: string; otp: string },
+  ): Promise<ResponseDto<any>> {
+    return await this.authService.verifyOtp(body.email, body.otp);
+  }
 }
