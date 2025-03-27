@@ -16,12 +16,14 @@ import { ResponseDto } from 'src/response.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { RefreshToken } from './refresh-token.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   //   private googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
   constructor(
+    private configService: ConfigService,
     private usersService: UsersService,
     @InjectRepository(AuthProvider)
     private authProviderRepo: Repository<AuthProvider>,
@@ -78,25 +80,50 @@ export class AuthService {
     });
   }
 
-  //   async googleAuth(token: string) {
-  //     const ticket = await this.googleClient.verifyIdToken({
-  //       idToken: token,
-  //       audience: process.env.GOOGLE_CLIENT_ID,
-  //     });
-  //     const payload = ticket.getPayload();
-  //     let user = await this.userRepository.findOne({
-  //       where: { email: payload.email },
-  //     });
+  async googleAuth(googleUser: any) {
+    let user = await this.usersService.findByEmail(googleUser.email);
 
-  //     if (!user) {
-  //       user = this.userRepository.create({
-  //         email: payload.email,
-  //         full_name: payload.name,
-  //         avatar_url: payload.picture,
-  //       });
-  //       await this.userRepository.save(user);
-  //     }
+    if (!user) {
+      user = await this.usersService.create({
+        email: googleUser.email,
+        full_name: googleUser.fullName,
+        password: this.configService.get<string>('AUTH_PASS'),
+      });
+    }
 
-  //     return { accessToken: this.jwtService.sign({ user_id: user.user_id }) };
-  //   }
+    let authProvider = await this.authProviderRepo.findOne({
+      where: { provider: 'google', provider_id: googleUser.providerId },
+    });
+
+    if (!authProvider) {
+      authProvider = this.authProviderRepo.create({
+        user: user,
+        provider: 'google',
+        provider_id: googleUser.providerId,
+      });
+      await this.authProviderRepo.save(authProvider);
+    }
+
+    const accessToken = this.jwtService.sign({
+      user_id: user.id,
+      token_type: 'access',
+    });
+    const refreshToken = this.jwtService.sign(
+      { user_id: user.id, token_type: 'refresh' },
+      {
+        expiresIn: '7d',
+      },
+    );
+    const newRefreshToken = this.refreshTokenRepo.create({
+      user: user,
+      token: refreshToken,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    await this.refreshTokenRepo.save(newRefreshToken);
+    return new ResponseDto<any>('Logged in successfully!', 200, {
+      user,
+      accessToken,
+      refreshToken,
+    });
+  }
 }
