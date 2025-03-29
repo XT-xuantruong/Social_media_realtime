@@ -2,16 +2,17 @@ import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ResponseDto } from 'src/response.dto';
 import { User } from './user.entity';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { JwtGuard } from '../auth/jwt-auth.guard';
 
 @Controller('api/users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(new JwtGuard('access')) // Yêu cầu access token
   async getMe(@Req() req): Promise<ResponseDto<User>> {
     const user = await this.usersService.findById(req.user.userId);
-    return new ResponseDto<User>('User retrieved successfully', 200, user);
+    const { password, ...userWithoutPassword } = user;
+    return new ResponseDto<User>('User retrieved successfully', 200, userWithoutPassword);
   }
 }

@@ -11,21 +11,40 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private usersService: UsersService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req) => {
+        // Nếu request có body và refreshToken (dùng cho /auth/refresh)
+        if (req?.body?.refreshToken) {
+          return req.body.refreshToken;
+        }
+        // Mặc định lấy từ Authorization header (dùng cho access token)
+        return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+      },
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_SECRET_KEY,
     });
   }
 
-  async validate(payload: any) {
-    // Kiểm tra token_type, chỉ cho phép 'access'
-    if (payload.token_type !== 'access') {
-      throw new UnauthorizedException('Only access token is allowed to access this resource');
+  async validate(payload: any, req: any) {
+    const tokenType = payload.token_type;
+
+    // Validate access token
+    if (tokenType === 'access') {
+      const user = await this.usersService.findById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+      return { userId: payload.sub, email: payload.email, tokenType: 'access' };
     }
-    const user = await this.usersService.findById(payload.sub);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
+
+    // Validate refresh token
+    if (tokenType === 'refresh') {
+      const user = await this.usersService.findById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+      return { userId: payload.sub, email: payload.email, tokenType: 'refresh' };
     }
-    return { userId: payload.sub, email: payload.email };
+
+    throw new UnauthorizedException('Invalid token type');
   }
 }
