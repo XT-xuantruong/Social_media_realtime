@@ -10,6 +10,8 @@ import ReusableForm, {
 } from "@/components/ReusableForm";
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLoginMutation } from "@/services/authApi";
+import { useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,6 +21,8 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [login] = useLoginMutation();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -26,31 +30,17 @@ export default function LoginPage() {
   const onSubmit = async (formData: z.infer<typeof loginSchema>) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Login failed');
-      }
-
-      const data = await response.json();
-
-      if (data?.token) {
-        toast({
-          title: "Login successful.",
-          description: "Welcome back! Redirecting...",
+      await login({
+        email: formData.email,
+        password: formData.password
+      }).unwrap()
+        .then(() => {
+          toast({
+            title: "Login successful.",
+            description: "You are now logged in.",
+          });
+        //   navigate("/home");
         });
-        localStorage.setItem("token", data.token);
-        // Redirect logic here (e.g., navigate to dashboard)
-      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       toast({

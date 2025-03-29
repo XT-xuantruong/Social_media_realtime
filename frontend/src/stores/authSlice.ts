@@ -1,8 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface AuthState {
-  token: string | null;
+  token: {
+    accessToken: string | null;
+    refreshToken: string | null;
+  } | null;
   user: {
     userId: string;
     fullName: string;
@@ -22,10 +24,15 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ token: string; user: any }>
+      action: PayloadAction<{ accessToken: string; refreshToken: string }>
     ) => {
-      state.token = action.payload.token;
-      state.user = action.payload.user;
+      state.token = {
+        accessToken: action.payload.accessToken,
+        refreshToken: action.payload.refreshToken,
+      };
+    },
+    setUser: (state, action: PayloadAction<{ user: object }>) => {
+      state.user = action.payload.user as AuthState["user"];
     },
     logout: (state) => {
       state.token = null;
@@ -34,5 +41,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, setUser, logout } = authSlice.actions;
 export default authSlice.reducer;
