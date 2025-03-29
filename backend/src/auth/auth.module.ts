@@ -9,6 +9,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { GoogleStrategy } from './google.strategy';
+import { MailerModule } from 'src/mailer/mailer.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { GoogleStrategy } from './google.strategy';
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '1h' },
     }),
+    MailerModule,
   ],
   providers: [AuthService, JwtStrategy, GoogleStrategy],
   controllers: [AuthController],

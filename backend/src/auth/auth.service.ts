@@ -17,6 +17,7 @@ import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { RefreshToken } from './refresh-token.entity';
 import { ConfigService } from '@nestjs/config';
+import { MailService } from 'src/mailer/mailer.service';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,64 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString(); // OTP 6 chữ số
+  }
+
+  async sendOtp(email: string): Promise<ResponseDto<any>> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      return new ResponseDto('User not found', 404, null);
+    }
+
+    const otp = this.generateOtp();
+    user.otp_code = otp;
+    user.otp_expires_at = new Date(Date.now() + 10 * 60 * 1000); // Hết hạn sau 10 phút
+    await this.usersService.update(user);
+
+    await this.mailService.sendOtpEmail(email, otp, user.full_name);
+    return new ResponseDto('OTP sent successfully', 200, null);
+  }
+
+  async verifyOtp(email: string, otp: string): Promise<ResponseDto<any>> {
+    const user = await this.usersService.findByEmail(email);
+    if (
+      !user ||
+      user.otp_code !== otp ||
+      !user.otp_expires_at ||
+      user.otp_expires_at < new Date()
+    ) {
+      return new ResponseDto('Invalid or expired OTP', 400, null);
+    }
+
+    user.otp_code = null; // Xóa OTP sau khi xác minh
+    user.otp_expires_at = null;
+    user.is_verified = true; // Đánh dấu tài khoản đã xác minh
+    await this.usersService.update(user);
+
+    const accessToken = this.jwtService.sign({
+      user_id: user.id,
+      token_type: 'access',
+    });
+    const refreshToken = this.jwtService.sign(
+      { user_id: user.id, token_type: 'refresh' },
+      { expiresIn: '7d' },
+    );
+
+    const newRefreshToken = this.refreshTokenRepo.create({
+      user,
+      token: refreshToken,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
+    await this.refreshTokenRepo.save(newRefreshToken);
+
+    return new ResponseDto('OTP verified successfully', 200, {
+      accessToken,
+      refreshToken,
+    });
+  }
 
   async register(dto: RegisterDto): Promise<ResponseDto<User>> {
     const existingUser = await this.usersService.findByEmail(dto.email);
