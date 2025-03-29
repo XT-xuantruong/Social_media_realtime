@@ -4,11 +4,12 @@ import { AuthController } from './auth.controller';
 import { RefreshToken } from './refresh-token.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from 'src/users/users.module';
+import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { GoogleStrategy } from './google.strategy';
+import { MailerModule } from '../mailer/mailer.module';
 
 @Module({
   imports: [
@@ -19,8 +20,9 @@ import { GoogleStrategy } from './google.strategy';
       secret: process.env.JWT_SECRET_KEY,
       signOptions: { expiresIn: '1h' },
     }),
+    MailerModule,
   ],
-  providers: [AuthService, JwtStrategy, GoogleStrategy],
+  providers: [AuthService, GoogleStrategy, JwtStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}

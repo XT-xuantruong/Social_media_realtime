@@ -47,4 +47,8 @@ export class UsersService {
     }
     return user;
   }
+
+  async update(user: User): Promise<User> {
+    return await this.usersRepository.save(user); // Cập nhật user với OTP
+  }
 }
