@@ -1,13 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { baseRestApi } from "@/services/baseRestApi";
+import { baseGraphqlApi } from "@/services/baseGraphqlApi";
 import authReducer from "./authSlice";
 
-// Cấu hình store với các reducer
 export const store = configureStore({
   reducer: {
-    auth: authReducer, // Reducer cho authentication
+    [baseRestApi.reducerPath]: baseRestApi.reducer,
+    [baseGraphqlApi.reducerPath]: baseGraphqlApi.reducer,
+    auth: authReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(
+      baseRestApi.middleware,
+      baseGraphqlApi.middleware
+    ),
 });
 
-// Định nghĩa type cho RootState và AppDispatch
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

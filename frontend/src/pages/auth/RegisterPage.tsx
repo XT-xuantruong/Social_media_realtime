@@ -11,6 +11,8 @@ import ReusableForm, {
 } from "@/components/ReusableForm";
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useRegisterMutation } from "@/services/authApi";
+import { useNavigate } from "react-router-dom";
 
 const registerSchema = z
   .object({
@@ -37,6 +39,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
+  const [register] = useRegisterMutation();
   const { toast } = useToast();
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
@@ -45,30 +49,16 @@ export default function RegisterPage() {
   const onSubmit = async (formData: z.infer<typeof registerSchema>) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fullName: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Registration failed');
-      }
-
-      const data = await response.json();
-
-      if (data) {
-        toast({
-          title: "Registration successful.",
-          description: "Registration successful. You can login now.",
-        });
-      }
+      await register({
+        full_name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      }).unwrap();
+      toast({
+        title: "Registration successful.",
+        description: "Registration successful. You can login now.",
+      })
+      navigate("/login");
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
       toast({
@@ -83,7 +73,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-white border rounded-lg shadow-lg">
+    <div className="w-full max-w-md mx-auto p-8 bg-white border rounded-lg shadow-lg flex flex-col">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Sign Up</h2>
       <ReusableForm
         schema={registerSchema}
