@@ -196,4 +196,30 @@ export class AuthService {
       refreshToken: newRefreshToken,
     });
   }
+
+  async logout(refreshToken: string, userId: string): Promise<ResponseDto<any>> {
+    // 1. Tìm refresh token trong database
+    const refreshTokenRecord = await this.refreshTokenRepo.findOne({
+      where: { token: refreshToken },
+      relations: ['user'],
+    });
+
+    if (!refreshTokenRecord) {
+      throw new BadRequestException('Invalid refresh token');
+    }
+
+    // 2. Kiểm tra token có hết hạn không
+    if (refreshTokenRecord.expires_at < new Date()) {
+      await this.refreshTokenRepo.delete(refreshTokenRecord.token_id);
+      throw new BadRequestException('Refresh token has expired');
+    }
+
+    // 3. Kiểm tra userId từ payload có khớp với user trong refresh token không
+    if (refreshTokenRecord.user.id !== userId) {
+      throw new BadRequestException('Invalid refresh token for this user');
+    }
+    // 4. Xóa refresh token
+    await this.refreshTokenRepo.delete(refreshTokenRecord.token_id);
+    return new ResponseDto('Logged out', 200, null);
+  }
 }
