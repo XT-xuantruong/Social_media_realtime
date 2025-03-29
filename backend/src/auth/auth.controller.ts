@@ -2,6 +2,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Req,
@@ -69,5 +70,15 @@ export class AuthController {
     console.log(req);
     
     return await this.authService.refreshToken(refreshToken, req.user.userId);
+  }
+
+  @Post('auth/logout')
+  @UseGuards(new JwtGuard('refresh')) // Yêu cầu refresh token
+  @UsePipes(new ValidationPipe())
+  async logout(
+    @Body('refreshToken') refreshToken: string,
+    @Req() req,
+  ): Promise<ResponseDto<any>> {
+    return await this.authService.logout(refreshToken, req.user.userId);
   }
 }
