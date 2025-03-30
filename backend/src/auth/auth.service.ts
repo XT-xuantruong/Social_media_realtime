@@ -11,9 +11,11 @@ import { MailService } from '../mailer/mailer.service';
 import { RefreshToken } from './refresh-token.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
+  private googleClient: OAuth2Client;
   constructor(
     @InjectRepository(AuthProvider)
     private authProviderRepo: Repository<AuthProvider>,
@@ -22,7 +24,9 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
     private usersService: UsersService,
-  ) {}
+  ) {
+    this.googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  }
 
   // Tạo access token
   private generateAccessToken(user: User): string {
@@ -46,7 +50,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<ResponseDto<User>> {
-    const user = await this.usersService.create(registerDto);
+    const user = await this.usersService.create(registerDto, false);
     const otp = this.generateOtp();
     user.otp_code = otp;
     user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
@@ -92,26 +96,36 @@ export class AuthService {
     });
   }
 
-  async googleAuth(googleUser: any): Promise<ResponseDto<any>> {
-    let user = await this.usersService.findByEmail(googleUser.email);
+  async googleAuth(token: string): Promise<ResponseDto<any>> {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, sub: googleId, name } = payload;
+
+    let user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      user = await this.usersService.create({
-        email: googleUser.email,
-        full_name: googleUser.fullName,
-        password: null,
-      });
+      user = await this.usersService.create(
+        {
+          email: email,
+          full_name: name,
+          password: process.env.AUTH_PASS,
+        },
+        true,
+      );
     }
 
     let authProvider = await this.authProviderRepo.findOne({
-      where: { provider: 'google', provider_id: googleUser.providerId },
+      where: { provider: 'google', provider_id: googleId },
     });
 
     if (!authProvider) {
       authProvider = this.authProviderRepo.create({
         user,
         provider: 'google',
-        provider_id: googleUser.providerId,
+        provider_id: googleId,
       });
       await this.authProviderRepo.save(authProvider);
     }
