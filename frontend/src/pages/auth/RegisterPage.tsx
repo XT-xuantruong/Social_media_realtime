@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
 import { useState } from "react";
 import ReusableForm, {
@@ -11,7 +12,7 @@ import ReusableForm, {
 } from "@/components/ReusableForm";
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useRegisterMutation } from "@/services/authApi";
+import { useRegisterMutation } from "@/services/AuthServices";
 import { useNavigate } from "react-router-dom";
 
 const registerSchema = z
@@ -49,18 +50,18 @@ export default function RegisterPage() {
   const onSubmit = async (formData: z.infer<typeof registerSchema>) => {
     setLoading(true);
     try {
-      await register({
+      const response = await register({
         full_name: formData.name,
         email: formData.email,
         password: formData.password,
       }).unwrap();
       toast({
         title: "Registration successful.",
-        description: "Registration successful. You can login now.",
+        description: response.message,
       })
-      navigate("/login");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+      navigate("/otp");
+    } catch (err : any) {
+      const errorMessage = err?.data?.message || "An unknown error occurred";
       toast({
         variant: "destructive",
         title: "Registration failed, please try again!",

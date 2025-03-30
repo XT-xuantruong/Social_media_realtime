@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
 import { useState } from "react";
 import ReusableForm, {
@@ -10,8 +11,9 @@ import ReusableForm, {
 } from "@/components/ReusableForm";
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLoginMutation } from "@/services/authApi";
-import { useNavigate } from "react-router-dom";
+import { useLoginMutation } from "@/services/AuthServices";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -37,12 +39,12 @@ export default function LoginPage() {
         .then(() => {
           toast({
             title: "Login successful.",
-            description: "You are now logged in.",
+            description: "Welcome back!",
           });
-        //   navigate("/home");
+          navigate("/home");
         });
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+    } catch (err:any) {
+      const errorMessage = err?.data?.message || "An unknown error occurred";
       toast({
         variant: "destructive",
         title: "Login failed!",
@@ -53,7 +55,9 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
+  const handleGoogleLogin = async () => {
+   window.location.href = "http://localhost:8099/api/auth/google";
+  }
   return (
     <div className="w-full max-w-md p-8 bg-white border rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Sign In</h2>
@@ -112,6 +116,21 @@ export default function LoginPage() {
           </>
         )}
       </ReusableForm>
+      <p className="text-center text-gray-600 mt-4">
+        Or login with social media
+      </p>
+      <Button
+          variant="outline"
+          className="w-full mt-4"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          
+          Login with Google
+        </Button>
+      <p className="text-center text-gray-600 mt-4">
+        Don't have an account? <Link to="/register">Sign up now</Link>
+      </p>
     </div>
   );
 }

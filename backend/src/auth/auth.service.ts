@@ -15,13 +15,13 @@ import { RegisterDto } from './dto/register.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private usersService: UsersService,
     @InjectRepository(AuthProvider)
     private authProviderRepo: Repository<AuthProvider>,
     @InjectRepository(RefreshToken)
     private refreshTokenRepo: Repository<RefreshToken>,
     private jwtService: JwtService,
     private mailService: MailService,
+    private usersService: UsersService,
   ) {}
 
   // Tạo access token
@@ -41,13 +41,41 @@ export class AuthService {
     );
   }
 
+  private generateOtp(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
   async register(registerDto: RegisterDto): Promise<ResponseDto<User>> {
     const user = await this.usersService.create(registerDto);
-    return new ResponseDto<User>('User registered successfully', 201, user);
+    const otp = this.generateOtp();
+    user.otp_code = otp;
+    user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
+    await this.usersService.update(user);
+
+    await this.mailService.sendOtpEmail(user.email, otp, user.full_name);
+
+    const auth_provider = this.authProviderRepo.create({
+      user,
+      provider: 'email',
+      provider_id: user.id,
+    });
+    await this.authProviderRepo.save(auth_provider);
+
+    return new ResponseDto<User>(
+      'We sent a code to your email for validate',
+      201,
+      user,
+    );
   }
 
   async login(loginDto: LoginDto): Promise<ResponseDto<any>> {
-    const user = await this.usersService.validateUser(loginDto.email, loginDto.password);
+    const user = await this.usersService.validateUser(
+      loginDto.email,
+      loginDto.password,
+    );
+    if (!user.is_verified) {
+      return new ResponseDto('Email not verified', 401, null);
+    }
     const accessToken = this.generateAccessToken(user);
     const refreshToken = this.generateRefreshToken(user);
 
@@ -59,7 +87,6 @@ export class AuthService {
     await this.refreshTokenRepo.save(newRefreshToken);
 
     return new ResponseDto<any>('Logged in successfully', 200, {
-      user,
       accessToken,
       refreshToken,
     });
@@ -100,14 +127,9 @@ export class AuthService {
     await this.refreshTokenRepo.save(newRefreshToken);
 
     return new ResponseDto<any>('Logged in successfully', 200, {
-      user,
       accessToken,
       refreshToken,
     });
-  }
-
-  private generateOtp(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
   async sendOtp(email: string): Promise<ResponseDto<any>> {
@@ -118,7 +140,7 @@ export class AuthService {
 
     const otp = this.generateOtp();
     user.otp_code = otp;
-    user.otp_expires_at = new Date(Date.now() + 5 * 60 * 1000);
+    user.otp_expires_at = new Date(Date.now() + 10 * 60 * 1000);
     await this.usersService.update(user);
 
     await this.mailService.sendOtpEmail(email, otp, user.full_name);
@@ -127,7 +149,12 @@ export class AuthService {
 
   async verifyOtp(email: string, otp: string): Promise<ResponseDto<any>> {
     const user = await this.usersService.findByEmail(email);
-    if (!user || user.otp_code !== otp || !user.otp_expires_at || user.otp_expires_at < new Date()) {
+    if (
+      !user ||
+      user.otp_code !== otp ||
+      !user.otp_expires_at ||
+      user.otp_expires_at < new Date()
+    ) {
       return new ResponseDto('Invalid or expired OTP', 400, null);
     }
 
@@ -153,7 +180,10 @@ export class AuthService {
     });
   }
 
-  async refreshToken(refreshToken: string, userId: string): Promise<ResponseDto<any>> {
+  async refreshToken(
+    refreshToken: string,
+    userId: string,
+  ): Promise<ResponseDto<any>> {
     // 1. Tìm refresh token trong database
     const refreshTokenRecord = await this.refreshTokenRepo.findOne({
       where: { token: refreshToken },
@@ -197,7 +227,10 @@ export class AuthService {
     });
   }
 
-  async logout(refreshToken: string, userId: string): Promise<ResponseDto<any>> {
+  async logout(
+    refreshToken: string,
+    userId: string,
+  ): Promise<ResponseDto<any>> {
     // 1. Tìm refresh token trong database
     const refreshTokenRecord = await this.refreshTokenRepo.findOne({
       where: { token: refreshToken },
