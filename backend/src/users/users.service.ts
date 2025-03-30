@@ -12,10 +12,11 @@ export class UsersService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async create(userData: RegisterDto): Promise<User> {
+  async create(userData: RegisterDto, is_verified: boolean): Promise<User> {
     const hashedPassword = await bcrypt.hash(userData.password, 10);
     const user = this.usersRepository.create({
       ...userData,
+      is_verified,
       password: hashedPassword, // Lưu mật khẩu đã mã hóa
     });
 
