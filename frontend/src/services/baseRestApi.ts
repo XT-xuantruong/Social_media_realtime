@@ -1,13 +1,13 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type {
   BaseQueryFn,
   FetchArgs,
   FetchBaseQueryError,
-} from "@reduxjs/toolkit/query";
-import { RootState } from "@/stores";
-import { setCredentials, logout } from "@/stores/authSlice";
+} from '@reduxjs/toolkit/query';
+import { RootState } from '@/stores';
+import { setCredentials, logout } from '@/stores/authSlice';
 
-const BASE_URL = "http://127.0.0.1:8099/api/";
+const BASE_URL = 'http://127.0.0.1:8099/api/';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: BASE_URL,
@@ -15,7 +15,7 @@ const baseQuery = fetchBaseQuery({
     const state = getState() as RootState;
     const accessToken = state.auth.token?.accessToken;
     if (accessToken) {
-      headers.set("Authorization", `Bearer ${accessToken}`);
+      headers.set('Authorization', `Bearer ${accessToken}`);
     }
     return headers;
   },
@@ -33,8 +33,8 @@ const baseQueryWithReauth: BaseQueryFn<
     if (refreshToken) {
       const refreshResult = await baseQuery(
         {
-          url: "refresh",
-          method: "POST",
+          url: 'auth/refresh',
+          method: 'POST',
           body: { refresh: refreshToken },
         },
         api,
@@ -64,7 +64,7 @@ const baseQueryWithReauth: BaseQueryFn<
 };
 
 export const baseRestApi = createApi({
-  reducerPath: "restApi",
+  reducerPath: 'restApi',
   baseQuery: baseQueryWithReauth,
   endpoints: () => ({}),
 });
