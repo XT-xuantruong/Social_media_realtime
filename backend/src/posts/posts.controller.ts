@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { JwtGuard } from 'src/auth/jwt-auth.guard';
 import { Post as PostEntity } from './posts.entity';
@@ -37,5 +37,14 @@ export class PostsController {
     ): Promise<ResponseDto<PostEntity>> {
         const updatedPost = await this.postService.update(postId, data, file);
         return new ResponseDto<PostEntity>('Updated Post successfully', 200, updatedPost);
+    }
+
+    @Delete(':postId')
+    @UseGuards(new JwtGuard('access'))
+    async delete(
+        @Param('postId') postId: string,
+    ): Promise<ResponseDto<void>> {
+        await this.postService.delete(postId);
+        return new ResponseDto<void>('Deleted Post successfully', 200, null);
     }
 }
