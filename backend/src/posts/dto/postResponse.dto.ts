@@ -1,0 +1,57 @@
+import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { Post } from '../posts.entity';
+
+// PageInfo cho cursor-based pagination
+@ObjectType()
+export class PageInfo {
+  @Field({ nullable: true })
+  endCursor?: string;
+
+  @Field()
+  hasNextPage: boolean;
+
+  @Field(() => Int)
+  total: number;
+}
+
+// PostEdge cho danh sách bài đăng
+@ObjectType()
+export class PostEdge {
+  @Field(() => Post)
+  node: Post;
+
+  @Field()
+  cursor: string;
+}
+
+// Response cho một bài đăng
+@ObjectType()
+export class PostResponse {
+  @Field()
+  message: string;
+
+  @Field(() => Int)
+  status: number;
+
+  @Field(() => Post)
+  data: Post;
+
+  @Field(() => PageInfo, { nullable: true })
+  pagination?: PageInfo;
+}
+
+// Response cho danh sách bài đăng
+@ObjectType()
+export class PostsListResponse {
+  @Field()
+  message: string;
+
+  @Field(() => Int)
+  status: number;
+
+  @Field(() => [PostEdge])
+  edges: PostEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+}
