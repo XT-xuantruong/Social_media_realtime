@@ -60,7 +60,7 @@ export class UsersService {
     const user = await this.findById(userId);
 
     if (file) {
-      const avatarUrl = await this.uploadService.uploadImage(file);
+      const avatarUrl = await this.uploadService.uploadImage(file, "user_avatars");
       user.avatar_url = avatarUrl;
     }
 

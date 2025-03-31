@@ -10,9 +10,12 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MailerModule } from './mailer/mailer.module';
 import { UploadModule } from './upload/upload.module';
+import { PostsModule } from './posts/posts.module';
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -31,6 +34,7 @@ import { UploadModule } from './upload/upload.module';
     UsersModule,
     MailerModule,
     UploadModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
