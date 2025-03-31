@@ -9,7 +9,7 @@ import { AppResolver } from './app.resolver';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MailerModule } from './mailer/mailer.module';
-
+import { UploadModule } from './upload/upload.module';
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -30,6 +30,7 @@ import { MailerModule } from './mailer/mailer.module';
     AuthModule,
     UsersModule,
     MailerModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

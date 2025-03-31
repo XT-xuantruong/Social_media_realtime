@@ -7,9 +7,9 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
     <div className="flex flex-col min-h-screen">
       <Header />
       <div className="pt-14">
-        <div className="h-64 bg-gray-200 relative">
-          {/* Ảnh bìa */}
-          <div className="absolute -bottom-16 left-8 w-32 h-32 bg-gray-300 rounded-full"></div> {/* Avatar */}
+        <div className="h-40 bg-gray-200 relative">
+          <div className="absolute -bottom-16 left-8 w-32 h-32 bg-gray-300 rounded-full">
+            </div> 
         </div>
         <div className="max-w-5xl mx-auto px-4 pt-20">
           <div className="flex space-x-4 mb-4">
