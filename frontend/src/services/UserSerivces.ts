@@ -1,5 +1,5 @@
 import { baseRestApi } from './baseRestApi';
-import { UserInfo } from '@/interfaces/user';
+import { UpdateUserDto, UserInfo } from '@/interfaces/user';
 import { ApiResponse } from '@/interfaces/apiResponse';
 
 const entity = 'users';
@@ -10,6 +10,17 @@ export const userServices = baseRestApi.injectEndpoints({
       query: () => ({
         url: `${entity}/me`,
         method: 'GET',
+      }),
+      transformResponse: (response: ApiResponse<UserInfo>) => ({
+        data: response.data,
+        message: response.message,
+      }),
+    }),
+    updateUser: builder.mutation<{ data: UserInfo; message: string }, UpdateUserDto>({
+      query: (userData) => ({
+        url: 'users/me',
+        method: 'PATCH',
+        body: userData,
       }),
       transformResponse: (response: ApiResponse<UserInfo>) => ({
         data: response.data,
