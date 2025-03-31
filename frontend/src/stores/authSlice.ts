@@ -1,16 +1,12 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { UserInfo } from '@/interfaces/user';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface AuthState {
   token: {
     accessToken: string | null;
     refreshToken: string | null;
   } | null;
-  user: {
-    userId: string;
-    fullName: string;
-    username: string;
-    avatarUrl?: string;
-  } | null;
+  user: UserInfo | null;
 }
 
 const initialState: AuthState = {
@@ -19,7 +15,7 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-  name: "auth",
+  name: 'auth',
   initialState,
   reducers: {
     setCredentials: (
@@ -31,8 +27,15 @@ const authSlice = createSlice({
         refreshToken: action.payload.refreshToken,
       };
     },
-    setUser: (state, action: PayloadAction<{ user: object }>) => {
-      state.user = action.payload.user as AuthState["user"];
+    setUser: (
+      state,
+      action: PayloadAction<{
+        user: object;
+        accessToken: string;
+        refreshToken: string;
+      }>
+    ) => {
+      state.user = action.payload.user as AuthState['user'];
     },
     logout: (state) => {
       state.token = null;
