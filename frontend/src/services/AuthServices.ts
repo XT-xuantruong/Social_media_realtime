@@ -45,7 +45,7 @@ export const authServices = baseRestApi.injectEndpoints({
             setUser({
               accessToken: authData.data.accessToken,
               refreshToken: authData.data.refreshToken,
-              user: meResult.data, // Lấy từ data của getMe
+              user: meResult.data, 
             })
           );
         } catch (error) {
@@ -166,14 +166,19 @@ export const authServices = baseRestApi.injectEndpoints({
         }
       },
     }),
-    loginGoogle: builder.query<{ data: any; message: string }, void>({
-      query: () => ({
-        url: `${entity}/google`,
-        method: 'GET',
+    loginGoogle: builder.mutation<
+      { data: any; message: string; status: number },
+      any
+    >({
+      query: (token) => ({
+        url: `${entity}/google-login`,
+        method: 'POST',
+        body: token,
       }),
       transformResponse: (response: ApiResponse<any>) => ({
         data: response.data,
         message: response.message,
+        status: response.status,
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
@@ -199,5 +204,5 @@ export const {
   useRefreshTokenMutation,
   useSendOtpMutation,
   useVerifyOtpMutation,
-  useLoginGoogleQuery,
+  useLoginGoogleMutation,
 } = authServices;

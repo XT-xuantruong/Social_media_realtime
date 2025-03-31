@@ -34,16 +34,11 @@ export class AuthController {
     return await this.authService.login(loginDto);
   }
 
-  @Get('auth/google')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuth(@Req() req) {
-    // Bắt đầu flow OAuth
-  }
-
-  @Get('auth/google/callback')
-  @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req) {
-    return await this.authService.googleAuth(req.user);
+  @Post('auth/google-login')
+  async googleAuthRedirect(
+    @Body('token') token: string,
+  ): Promise<ResponseDto<any>> {
+    return await this.authService.googleAuth(token);
   }
 
   @Post('auth/otp/send')
@@ -68,7 +63,7 @@ export class AuthController {
     @Req() req,
   ): Promise<ResponseDto<any>> {
     console.log(req);
-    
+
     return await this.authService.refreshToken(refreshToken, req.user.userId);
   }
 

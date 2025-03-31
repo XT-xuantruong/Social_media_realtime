@@ -7,7 +7,7 @@ import type {
 import { RootState } from '@/stores';
 import { setCredentials, logout } from '@/stores/authSlice';
 
-const BASE_URL = 'http://127.0.0.1:8099/api/';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8099/api/';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: BASE_URL,
