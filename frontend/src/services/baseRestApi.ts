@@ -1,3 +1,4 @@
+
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type {
   BaseQueryFn,
@@ -64,6 +65,7 @@ const baseQueryWithReauth: BaseQueryFn<
 };
 
 export const baseRestApi = createApi({
+
   reducerPath: 'restApi',
   baseQuery: baseQueryWithReauth,
   endpoints: () => ({}),
