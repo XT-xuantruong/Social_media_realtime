@@ -99,3 +99,8 @@ type Query {
   getPost(postId: String!): PostResponse!
   getPosts(limit: Float!, cursor: String): PostsListResponse!
 }
+
+type Mutation {
+  likePost(postId: String!): String!
+  unlikePost(postId: String!): String!
+}

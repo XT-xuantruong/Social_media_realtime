@@ -14,7 +14,7 @@ export class PostsService {
     private postsRepository: Repository<Post>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    private uploadService: UploadService, // Inject UploadService
+    private uploadService: UploadService,
   ) {}
 
   async findOne(post_id: string): Promise<{ post: Post; total: number }> {
@@ -76,7 +76,9 @@ export class PostsService {
     }
     const post = this.postsRepository.create({
       content: postData.content,
-      media_url: await this.uploadService.uploadImage(file, 'Post'),
+      media_url: file
+        ? await this.uploadService.uploadImage(file, 'Post')
+        : null,
       visibility: postData.visibility,
       user: user,
     });

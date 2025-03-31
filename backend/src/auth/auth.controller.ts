@@ -16,7 +16,7 @@ import { User } from 'src/users/user.entity';
 import { ResponseDto } from 'src/response.dto';
 import { LoginDto } from './dto/login.dto';
 import { GoogleAuthGuard } from './google-auth.guard';
-import { JwtGuard } from './jwt-auth.guard';
+import { JwtRefreshGuard } from './jwt-refresh.guard';
 
 @Controller('api')
 export class AuthController {
@@ -56,7 +56,7 @@ export class AuthController {
   }
 
   @Post('auth/refresh')
-  @UseGuards(new JwtGuard('refresh')) // Yêu cầu refresh token
+  @UseGuards(JwtRefreshGuard) // Yêu cầu refresh token
   @UsePipes(new ValidationPipe())
   async refreshToken(
     @Body('refreshToken') refreshToken: string,
@@ -68,7 +68,7 @@ export class AuthController {
   }
 
   @Post('auth/logout')
-  @UseGuards(new JwtGuard('refresh')) // Yêu cầu refresh token
+  @UseGuards(JwtRefreshGuard) // Yêu cầu refresh token
   @UsePipes(new ValidationPipe())
   async logout(
     @Body('refreshToken') refreshToken: string,

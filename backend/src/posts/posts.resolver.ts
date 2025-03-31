@@ -1,12 +1,21 @@
-import { Resolver, Query, Args } from '@nestjs/graphql';
+import { Resolver, Query, Args, Mutation } from '@nestjs/graphql';
 import { PostsService } from './posts.service';
 import { PostsListResponse, PostResponse } from './dto/postResponse.dto';
+import { LikesService } from 'src/likes/likes.service';
+import { Req, UseGuards } from '@nestjs/common';
+import { User } from 'src/users/user.entity';
+import { CurrentUser } from 'src/current-user/current-user.decorator';
+import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
 
 @Resolver()
 export class PostsResolver {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly likesService: LikesService,
+  ) {}
 
   @Query(() => PostResponse)
+  @UseGuards(JwtAccessGuard)
   async getPost(@Args('postId') postId: string): Promise<PostResponse> {
     const { post, total } = await this.postsService.findOne(postId);
     return {
@@ -22,6 +31,7 @@ export class PostsResolver {
   }
 
   @Query(() => PostsListResponse)
+  @UseGuards(JwtAccessGuard)
   async getPosts(
     @Args('limit', { type: () => Number }) limit: number,
     @Args('cursor', { type: () => String, nullable: true }) cursor?: string,
@@ -42,5 +52,31 @@ export class PostsResolver {
         total,
       },
     };
+  }
+
+  @Mutation(() => String)
+  @UseGuards(JwtAccessGuard)
+  async likePost(
+    @Args('postId') postId: string,
+    @CurrentUser() user: User,
+  ): Promise<string> {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.likesService.likePost(postId, user.id);
+  }
+
+  @Mutation(() => String)
+  @UseGuards(JwtAccessGuard)
+  async unlikePost(
+    @Args('postId') postId: string,
+    @CurrentUser() user: User,
+  ): Promise<string> {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.likesService.unlikePost(postId, user.id);
   }
 }

@@ -22,7 +22,8 @@ import { MailerModule } from '../mailer/mailer.module';
     }),
     MailerModule,
   ],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
   controllers: [AuthController],
+  providers: [AuthService, GoogleStrategy, JwtStrategy],
+  exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}
