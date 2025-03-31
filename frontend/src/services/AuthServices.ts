@@ -45,7 +45,7 @@ export const authServices = baseRestApi.injectEndpoints({
             setUser({
               accessToken: authData.data.accessToken,
               refreshToken: authData.data.refreshToken,
-              user: meResult.data, // Lấy từ data của getMe
+              user: meResult.data, 
             })
           );
         } catch (error) {
