@@ -14,3 +14,11 @@ export interface UserCredentials {
   email: string;
   password: string;
 }
+
+
+export interface UpdateUserDto {
+  full_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  privacy?: 'public' | 'private' | 'friends';
+}
