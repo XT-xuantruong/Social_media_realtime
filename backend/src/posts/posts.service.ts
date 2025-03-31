@@ -55,4 +55,14 @@ export class PostsService {
         return this.postsRepository.save(post);
     }
 
+    async delete(postId: string): Promise<void> {
+        const post = await this.postsRepository.findOne({
+            where: { post_id: postId },
+        });
+        if (!post) {
+            throw new NotFoundException('Post not found');
+        }
+
+        await this.postsRepository.delete(postId);
+    }
 }
