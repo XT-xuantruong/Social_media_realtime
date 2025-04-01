@@ -45,6 +45,7 @@ export class CommentsService {
       user,
       content,
     });
+    console.log(userId, comment.user.id);
 
     return this.commentsRepository.save(comment);
   }

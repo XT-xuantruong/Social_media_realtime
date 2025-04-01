@@ -22,6 +22,12 @@ export class PostEdge {
 
   @Field()
   cursor: string;
+
+  @Field(() => Int)
+  likeCount: number;
+
+  @Field(() => Int)
+  commentCount: number;
 }
 
 // Response cho một bài đăng
@@ -38,6 +44,12 @@ export class PostResponse {
 
   @Field(() => PageInfo, { nullable: true })
   pagination?: PageInfo;
+
+  @Field(() => Int)
+  likeCount: number;
+
+  @Field(() => Int)
+  commentCount: number;
 }
 
 // Response cho danh sách bài đăng
