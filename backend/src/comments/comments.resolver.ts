@@ -15,12 +15,12 @@ export class CommentsResolver {
   async createComment(
     @Args('postId') postId: string,
     @Args('content') content: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
   ): Promise<Comment> {
     if (!user) {
       throw new Error('User not authenticated');
     }
-    return this.commentsService.createComment(postId, content, user.id);
+    return this.commentsService.createComment(postId, content, user.userId);
   }
 
   @Mutation(() => String)
