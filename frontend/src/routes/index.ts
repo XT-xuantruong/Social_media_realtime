@@ -1,4 +1,5 @@
 import AuthLayout from '@/layouts/AuthLayout';
+import MainSidebarLayout from '@/layouts/MainSidebarLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import OtpFormPage from '@/pages/auth/OtpFormPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
@@ -10,5 +11,5 @@ export const publicRoutes = [
   { path: '/register', component: RegisterPage, layout: AuthLayout },
   { path: '/login', component: LoginPage, layout: AuthLayout },
   { path: '/otp', component: OtpFormPage, layout: AuthLayout },
-  { path: '/', component: Home, layout: AuthLayout },
+  { path: '/', component: Home, layout: MainSidebarLayout },
 ];
