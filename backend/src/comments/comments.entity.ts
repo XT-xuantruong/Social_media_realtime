@@ -17,7 +17,7 @@ export class Comment {
   comment_id: string; // CHAR(36) UUID
 
   @ManyToOne(() => User, (user) => user.comments, { onDelete: 'CASCADE' })
-  @Field(() => User)
+  @Field(() => User, { nullable: true })
   user: User; // CHAR(36) FK tới users
 
   @ManyToOne(() => Post, (post) => post.comments, { onDelete: 'CASCADE' })

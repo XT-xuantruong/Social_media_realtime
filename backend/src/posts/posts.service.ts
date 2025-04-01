@@ -17,13 +17,20 @@ export class PostsService {
     private uploadService: UploadService,
   ) {}
 
-  async findOne(post_id: string): Promise<{ post: Post; total: number }> {
+  async findOne(post_id: string): Promise<{
+    post: Post;
+    total: number;
+    likeCount: number;
+    commentCount: number;
+  }> {
     const post = await this.postsRepository.findOneOrFail({
       where: { post_id },
-      relations: ['user', 'likes', 'comments'],
+      relations: ['user', 'likes', 'comments', 'comments.user'],
     });
     const total = await this.postsRepository.count();
-    return { post, total };
+    const likeCount = post.likes ? post.likes.length : 0; // Tính số lượng like
+    const commentCount = post.comments ? post.comments.length : 0; // Tính số lượng comment
+    return { post, total, likeCount, commentCount };
   }
 
   async findPosts(
@@ -34,12 +41,15 @@ export class PostsService {
     hasNextPage: boolean;
     endCursor?: string;
     total: number;
+    likeCounts: number[];
+    commentCounts: number[];
   }> {
     const query = this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
       .leftJoinAndSelect('post.likes', 'likes')
       .leftJoinAndSelect('post.comments', 'comments')
+      .leftJoinAndSelect('comments.user', 'commentUser')
       .orderBy('post.created_at', 'DESC')
       .take(limit + 1);
 
@@ -49,6 +59,7 @@ export class PostsService {
     }
 
     const posts = await query.getMany();
+
     const total = await this.postsRepository.count();
     const hasNextPage = posts.length > limit;
     const endCursor = hasNextPage
@@ -57,17 +68,27 @@ export class PostsService {
         )
       : undefined;
 
+    // Tính số lượng like và comment cho từng bài đăng
+    const likeCounts = posts.map((post) =>
+      post.likes ? post.likes.length : 0,
+    );
+    const commentCounts = posts.map((post) =>
+      post.comments ? post.comments.length : 0,
+    );
+
     return {
       posts: posts.slice(0, limit),
       hasNextPage,
       endCursor,
       total,
+      likeCounts,
+      commentCounts,
     };
   }
 
   async create(
     postData: CreatePostDto,
-    files: Express.Multer.File[], // Nhận mảng file
+    files: Express.Multer.File[],
     user_id: string,
   ): Promise<Post> {
     const user = await this.userRepository.findOneBy({ id: user_id });
@@ -75,7 +96,6 @@ export class PostsService {
       throw new NotFoundException('User not found');
     }
 
-    // Upload từng file và lấy URL
     let mediaUrls: string[] = [];
     if (files && files.length > 0) {
       mediaUrls = await Promise.all(
@@ -85,7 +105,7 @@ export class PostsService {
 
     const post = this.postsRepository.create({
       content: postData.content,
-      media_url: mediaUrls.length > 0 ? mediaUrls : null, // Lưu mảng URL
+      media_url: mediaUrls.length > 0 ? mediaUrls : null,
       visibility: postData.visibility,
       user: user,
     });
@@ -96,7 +116,7 @@ export class PostsService {
   async update(
     postId: string,
     postData: UpdatePostDto,
-    files: Express.Multer.File[], // Nhận mảng file
+    files: Express.Multer.File[],
   ): Promise<Post> {
     const post = await this.postsRepository.findOneBy({
       post_id: postId,
@@ -107,13 +127,11 @@ export class PostsService {
       );
     }
 
-    // Cập nhật các trường nếu có trong DTO
     if (postData.content !== undefined) {
       post.content = postData.content;
     }
 
     if (files && files.length > 0) {
-      // Upload các file mới và thêm vào mảng media_url hiện tại
       const newMediaUrls = await Promise.all(
         files.map((file) => this.uploadService.uploadImage(file, 'Post')),
       );
