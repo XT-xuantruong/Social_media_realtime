@@ -27,8 +27,9 @@ interface ReusableFormProps<T extends FieldValues> {
   onSubmit: (data: T) => void;
   children: (form: UseFormReturn<T>) => ReactNode;
   submitText?: string;
-  defaultValues?: DefaultValues<T>; 
+  defaultValues?: DefaultValues<T>;
   isLoading?: boolean;
+  hideSubmitButton?: boolean; // Thêm prop để ẩn nút submit
 }
 
 export default function ReusableForm<T extends FieldValues>({
@@ -38,6 +39,7 @@ export default function ReusableForm<T extends FieldValues>({
   submitText = "Submit",
   defaultValues,
   isLoading = false,
+  hideSubmitButton = false,
 }: ReusableFormProps<T>) {
   const form = useForm<T>({
     resolver: zodResolver(schema),
@@ -48,22 +50,23 @@ export default function ReusableForm<T extends FieldValues>({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {children(form)}
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Đang xử lý...
-            </>
-          ) : (
-            submitText
-          )}
-        </Button>
+        {!hideSubmitButton && (
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              submitText
+            )}
+          </Button>
+        )}
       </form>
     </Form>
   );
 }
 
-// Export các component shadcn
 export {
   FormControl,
   FormField,

@@ -1,9 +1,9 @@
-import React from 'react';
+import FormCreatePost from '@/components/FormCreatePost';
 
 const Home = () => {
     return (
         <div>
-            home
+            <FormCreatePost />
         </div>
     );
 };
