@@ -2,6 +2,111 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type RefreshToken {
+  token_id: ID!
+  user: User!
+  token: String!
+  expires_at: DateTime!
+  created_at: DateTime!
+  is_revoked: Boolean!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Like {
+  like_id: ID!
+  user: User!
+  post: Post!
+  created_at: DateTime!
+}
+
+type Comment {
+  comment_id: ID!
+  user: User
+  post: Post!
+  content: String!
+  created_at: DateTime!
+}
+
+type Post {
+  post_id: ID!
+  user: User!
+  content: String!
+  media_url: [String!]
+  created_at: DateTime!
+  updated_at: DateTime
+  visibility: String!
+  likes: [Like!]
+  comments: [Comment!]
+}
+
+type User {
+  id: ID!
+  email: String!
+  full_name: String
+  avatar_url: String
+  bio: String
+  privacy: String!
+  created_at: DateTime!
+  is_verified: Boolean!
+  otp_code: String
+  otp_expires_at: DateTime
+  authProviders: [AuthProvider!]
+  refreshTokens: [RefreshToken!]
+  posts: [Post!]
+  likes: [Like!]
+  comments: [Comment!]
+}
+
+type AuthProvider {
+  auth_id: ID!
+  user: User!
+  provider: String!
+  provider_id: String!
+  created_at: DateTime!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  total: Int!
+}
+
+type PostEdge {
+  node: Post!
+  cursor: String!
+  likeCount: Int!
+  commentCount: Int!
+}
+
+type PostResponse {
+  message: String!
+  status: Int!
+  data: Post!
+  pagination: PageInfo
+  likeCount: Int!
+  commentCount: Int!
+}
+
+type PostsListResponse {
+  message: String!
+  status: Int!
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   hello: String!
+  getPost(postId: String!): PostResponse!
+  getPosts(limit: Int!, cursor: String): PostsListResponse!
+}
+
+type Mutation {
+  likePost(postId: String!): String!
+  unlikePost(postId: String!): String!
+  createComment(postId: String!, content: String!): Comment!
+  deleteComment(commentId: String!): String!
 }

@@ -1,13 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/services/baseGraphqlApi.ts
-import { createApi } from "@reduxjs/toolkit/query/react";
-import type { BaseQueryFn } from "@reduxjs/toolkit/query";
-import { RootState } from "@/stores";
-import { logout, setCredentials } from "@/stores/authSlice";
+import { createApi } from '@reduxjs/toolkit/query/react';
+import type { BaseQueryFn } from '@reduxjs/toolkit/query';
+import { RootState } from '@/stores';
+import { logout, setCredentials } from '@/stores/authSlice';
 
-const GRAPHQL_URL =
-  "https://ecommerceapi-production-e4cc.up.railway.app/graphql";
-const REST_URL = "https://ecommerceapi-production-e4cc.up.railway.app/";
+const GRAPHQL_URL = 'http://127.0.0.1:8099/graphql';
+const REST_URL = 'http://127.0.0.1:8099/api';
 
 interface GraphQLRequest {
   query: string;
@@ -22,9 +20,9 @@ const graphqlBaseQuery =
 
     try {
       const response = await fetch(GRAPHQL_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
         },
         body: JSON.stringify({ query, variables }),
@@ -52,18 +50,18 @@ const graphqlBaseQueryWithReauth: BaseQueryFn = async (
   if (result.error && result.error.status === 401) {
     const refreshToken = (api.getState() as RootState).auth.token?.refreshToken;
     if (refreshToken) {
-      const refreshResult = await fetch(`${REST_URL}refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const refreshResult = await fetch(`${REST_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh: refreshToken }),
       });
       const refreshData = await refreshResult.json();
 
-      if (refreshData.accessToken) {
+      if (refreshData.data.accessToken) {
         api.dispatch(
           setCredentials({
-            accessToken: refreshData.accessToken,
-            refreshToken: refreshData.refreshToken,
+            accessToken: refreshData.data.accessToken,
+            refreshToken: refreshData.data.refreshToken,
           })
         );
         result = await graphqlBaseQuery()(args, api, extraOptions);
@@ -79,8 +77,8 @@ const graphqlBaseQueryWithReauth: BaseQueryFn = async (
 };
 
 export const baseGraphqlApi = createApi({
-  reducerPath: "graphqlApi",
+  reducerPath: 'graphqlApi',
   baseQuery: graphqlBaseQueryWithReauth,
-  tagTypes: ["ProductsGraphQL"],
+  tagTypes: ['Posts'],
   endpoints: () => ({}),
 });
