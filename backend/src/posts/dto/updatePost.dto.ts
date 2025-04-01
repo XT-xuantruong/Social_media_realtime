@@ -1,10 +1,11 @@
-import { IsString, MaxLength, IsEnum } from 'class-validator';
+import { IsString, MaxLength, IsEnum, IsOptional } from 'class-validator';
 
 export class UpdatePostDto {
   @IsString()
-  @MaxLength(1000)
+  @IsOptional()
   content: string;
 
   @IsEnum(['public', 'friends', 'private'])
+  @IsOptional()
   visibility: string;
 }

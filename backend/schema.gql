@@ -35,7 +35,7 @@ type Post {
   post_id: ID!
   user: User!
   content: String!
-  media_url: String
+  media_url: [String!]
   created_at: DateTime!
   updated_at: DateTime
   visibility: String!

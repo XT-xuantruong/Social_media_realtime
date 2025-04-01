@@ -67,28 +67,36 @@ export class PostsService {
 
   async create(
     postData: CreatePostDto,
-    file: Express.Multer.File,
+    files: Express.Multer.File[], // Nhận mảng file
     user_id: string,
   ): Promise<Post> {
     const user = await this.userRepository.findOneBy({ id: user_id });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Upload từng file và lấy URL
+    let mediaUrls: string[] = [];
+    if (files && files.length > 0) {
+      mediaUrls = await Promise.all(
+        files.map((file) => this.uploadService.uploadImage(file, 'Post')),
+      );
+    }
+
     const post = this.postsRepository.create({
       content: postData.content,
-      media_url: file
-        ? await this.uploadService.uploadImage(file, 'Post')
-        : null,
+      media_url: mediaUrls.length > 0 ? mediaUrls : null, // Lưu mảng URL
       visibility: postData.visibility,
       user: user,
     });
 
     return this.postsRepository.save(post);
   }
+
   async update(
     postId: string,
     postData: UpdatePostDto,
-    file: Express.Multer.File,
+    files: Express.Multer.File[], // Nhận mảng file
   ): Promise<Post> {
     const post = await this.postsRepository.findOneBy({
       post_id: postId,
@@ -104,13 +112,20 @@ export class PostsService {
       post.content = postData.content;
     }
 
-    if (file) {
-      post.media_url = await this.uploadService.uploadImage(file, 'Post');
+    if (files && files.length > 0) {
+      // Upload các file mới và thêm vào mảng media_url hiện tại
+      const newMediaUrls = await Promise.all(
+        files.map((file) => this.uploadService.uploadImage(file, 'Post')),
+      );
+      post.media_url = post.media_url
+        ? [...post.media_url, ...newMediaUrls]
+        : newMediaUrls;
     }
 
     if (postData.visibility !== undefined) {
       post.visibility = postData.visibility;
     }
+
     return this.postsRepository.save(post);
   }
 

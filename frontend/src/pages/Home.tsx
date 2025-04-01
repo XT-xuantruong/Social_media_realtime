@@ -1,4 +1,4 @@
-import FormCreatePost from '@/components/post/FormCreatePost';
+import FormCreatePost from '@/components/FormCreatePost';
 
 const Home = () => {
     return (
