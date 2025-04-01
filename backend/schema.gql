@@ -103,4 +103,6 @@ type Query {
 type Mutation {
   likePost(postId: String!): String!
   unlikePost(postId: String!): String!
+  createComment(postId: String!, content: String!): Comment!
+  deleteComment(commentId: String!): String!
 }
