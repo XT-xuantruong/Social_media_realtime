@@ -27,9 +27,9 @@ export class Post {
   @Field()
   content: string; // Nội dung bài đăng
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  @Field({ nullable: true })
-  media_url: string; // Link ảnh/video (Cloudinary)
+  @Column({ type: 'json', nullable: true }) // Sử dụng JSON để lưu mảng URL
+  @Field(() => [String], { nullable: true })
+  media_url: string[]; // Link ảnh/video (Cloudinary)
 
   @CreateDateColumn()
   @Field()

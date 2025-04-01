@@ -6,7 +6,7 @@ import {
   Post,
   Put,
   Req,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -14,7 +14,7 @@ import { PostsService } from './posts.service';
 import { Post as PostEntity } from './posts.entity';
 import { ResponseDto } from 'src/response.dto';
 import { CreatePostDto } from './dto/createPost.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { UpdatePostDto } from './dto/updatePost.dto';
 import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
 
@@ -25,23 +25,24 @@ export class PostsController {
   @Post('')
   @UseGuards(JwtAccessGuard)
   @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 },
+    FilesInterceptor('files', 5, {
+      // Giới hạn tối đa 5 file
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB mỗi file
     }),
   )
   async create(
     @Req() req,
     @Body() data: CreatePostDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[], // Nhận mảng file
   ): Promise<ResponseDto<PostEntity>> {
-    const post = await this.postService.create(data, file, req.user.userId);
+    const post = await this.postService.create(data, files, req.user.userId);
     return new ResponseDto<PostEntity>('Created Post successfully', 200, post);
   }
 
   @Put(':id')
   @UseGuards(JwtAccessGuard)
   @UseInterceptors(
-    FileInterceptor('file', {
+    FilesInterceptor('files', 5, {
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )
@@ -49,9 +50,9 @@ export class PostsController {
     @Param('postId') postId: string,
     @Req() req,
     @Body() data: UpdatePostDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFiles() files?: Express.Multer.File[], // Nhận mảng file
   ): Promise<ResponseDto<PostEntity>> {
-    const updatedPost = await this.postService.update(postId, data, file);
+    const updatedPost = await this.postService.update(postId, data, files);
     return new ResponseDto<PostEntity>(
       'Updated Post successfully',
       200,
