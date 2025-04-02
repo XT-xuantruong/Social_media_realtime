@@ -63,25 +63,25 @@ export class PostsResolver {
   @UseGuards(JwtAccessGuard)
   async likePost(
     @Args('postId') postId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
   ): Promise<string> {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    return this.likesService.likePost(postId, user.id);
+    return this.likesService.likePost(postId, user.userId);
   }
 
   @Mutation(() => String)
   @UseGuards(JwtAccessGuard)
   async unlikePost(
     @Args('postId') postId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
   ): Promise<string> {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    return this.likesService.unlikePost(postId, user.id);
+    return this.likesService.unlikePost(postId, user.userId);
   }
 }

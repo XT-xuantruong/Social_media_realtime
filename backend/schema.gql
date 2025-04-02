@@ -134,7 +134,7 @@ type Query {
 type Mutation {
   likePost(postId: String!): String!
   unlikePost(postId: String!): String!
+  markNotificationAsRead(notificationId: String!): Notification!
   createComment(postId: String!, content: String!): Comment!
   deleteComment(commentId: String!): String!
-  markNotificationAsRead(notificationId: String!): Notification!
 }

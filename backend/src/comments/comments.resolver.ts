@@ -24,7 +24,7 @@ export class CommentsResolver {
   }
 
   @Mutation(() => String)
-  @UseGuards(JwtAccessGuard) // Yêu cầu access token
+  @UseGuards(JwtAccessGuard)
   async deleteComment(
     @Args('commentId') commentId: string,
     @CurrentUser() user: any,

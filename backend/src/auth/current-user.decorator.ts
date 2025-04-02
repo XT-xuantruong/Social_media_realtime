@@ -1,11 +1,18 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { User } from '../users/user.entity';
 
 export const CurrentUser = createParamDecorator(
-  (data: unknown, context: ExecutionContext): User => {
+  (data: unknown, context: ExecutionContext) => {
     const ctx = GqlExecutionContext.create(context);
-    const req = ctx.getContext().req;
-    return req.user; // Trả về user từ req.user
+    const gqlContext = ctx.getContext();
+
+    // WebSocket context: Lấy user từ gqlContext.user
+    if (gqlContext.connectionParams) {
+      return gqlContext.user;
+    }
+
+    // HTTP context: Lấy user từ request
+    const request = gqlContext.req || context.switchToHttp().getRequest();
+    return request.user;
   },
 );

@@ -13,7 +13,6 @@ import { MailerModule } from '../mailer/mailer.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
     UsersModule,
     TypeOrmModule.forFeature([AuthProvider, RefreshToken]),
     JwtModule.register({

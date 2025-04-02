@@ -7,11 +7,19 @@ import { Like } from 'src/likes/likes.entity';
 import { User } from 'src/users/user.entity';
 import { Comment } from 'src/comments/comments.entity';
 import { Notification } from './notifications.entity';
+import { NotificationsGateway } from './notifications.gateway';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Like, Post, Comment, Notification]),
   ],
-  providers: [NotificationsService, NotificationsResolver],
+  providers: [
+    NotificationsService,
+    NotificationsResolver,
+    NotificationsGateway,
+    JwtService,
+  ],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}

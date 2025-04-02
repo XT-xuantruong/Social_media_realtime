@@ -19,7 +19,7 @@ export class RefreshToken {
   @Field(() => User)
   user: User;
 
-  @Column({ unique: true, length: 255 })
+  @Column({ unique: true })
   @Field()
   token: string;
 
