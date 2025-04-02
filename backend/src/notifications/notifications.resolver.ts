@@ -1,6 +1,7 @@
-import { Resolver, Query, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Args, Int, Mutation } from '@nestjs/graphql';
 import { NotificationsService } from './notifications.service';
 import { NotificationResponse } from './dto/notificationResponse.dto';
+import { Notification } from './notifications.entity';
 import { UseGuards } from '@nestjs/common';
 import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
 import { CurrentUser } from 'src/auth/current-user.decorator';
@@ -41,5 +42,18 @@ export class NotificationsResolver {
         },
       },
     };
+  }
+
+  @Mutation(() => Notification)
+  @UseGuards(JwtAccessGuard)
+  async markNotificationAsRead(
+    @Args('notificationId') notificationId: string,
+    @CurrentUser() user: any,
+  ): Promise<Notification> {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    return this.notificationsService.markAsRead(notificationId, user.userId);
   }
 }
