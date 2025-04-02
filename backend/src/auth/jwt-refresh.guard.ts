@@ -8,10 +8,6 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtRefreshGuard extends AuthGuard('jwt') {
-  constructor() {
-    super();
-  }
-
   getRequest(context: ExecutionContext) {
     const ctx = GqlExecutionContext.create(context);
     return ctx.getContext().req || context.switchToHttp().getRequest();
@@ -21,11 +17,9 @@ export class JwtRefreshGuard extends AuthGuard('jwt') {
     if (err || !user) {
       throw err || new UnauthorizedException('Unauthorized');
     }
-
     if (user.tokenType !== 'refresh') {
       throw new UnauthorizedException('This endpoint requires a refresh token');
     }
-
     return user;
   }
 }

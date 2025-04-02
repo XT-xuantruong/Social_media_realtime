@@ -33,14 +33,14 @@ export class AuthService {
     return this.jwtService.sign({
       sub: user.id,
       email: user.email,
-      token_type: 'access',
+      tokenType: 'access',
     });
   }
 
   // Tạo refresh token
   private generateRefreshToken(user: User): string {
     return this.jwtService.sign(
-      { sub: user.id, token_type: 'refresh' },
+      { sub: user.id, tokenType: 'refresh' },
       { expiresIn: '7d' },
     );
   }

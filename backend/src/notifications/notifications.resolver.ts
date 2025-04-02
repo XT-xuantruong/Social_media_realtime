@@ -1,3 +1,4 @@
+// notifications.resolver.ts
 import { Resolver, Query, Args, Int, Mutation } from '@nestjs/graphql';
 import { NotificationsService } from './notifications.service';
 import { NotificationResponse } from './dto/notificationResponse.dto';
@@ -48,12 +49,12 @@ export class NotificationsResolver {
   @UseGuards(JwtAccessGuard)
   async markNotificationAsRead(
     @Args('notificationId') notificationId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ): Promise<Notification> {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    return this.notificationsService.markAsRead(notificationId, user.userId);
+    return this.notificationsService.markAsRead(notificationId, user.id);
   }
 }
