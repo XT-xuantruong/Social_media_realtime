@@ -11,7 +11,7 @@ export class FriendshipResolver {
   async getFriends(
     @Args('limit', { type: () => Int, nullable: true }) limit: number,
     @Args('offset', { type: () => Int, nullable: true }) offset: number,
-    @Args('currentUserId') currentUserId: string, // Tạm thời truyền currentUserId để test
+    @Args('currentUserId') currentUserId: string,
   ): Promise<PaginatedUserResponse> {
     return this.friendshipService.getFriends(limit, offset, currentUserId);
   }
@@ -20,7 +20,7 @@ export class FriendshipResolver {
   async getFriendRequests(
     @Args('limit', { type: () => Int, nullable: true }) limit: number,
     @Args('offset', { type: () => Int, nullable: true }) offset: number,
-    @Args('currentUserId') currentUserId: string, // Tạm thời truyền currentUserId để test
+    @Args('currentUserId') currentUserId: string,
   ): Promise<PaginatedFriendshipResponse> {
     return this.friendshipService.getFriendRequests(limit, offset, currentUserId);
   }
@@ -31,5 +31,22 @@ export class FriendshipResolver {
     @Args('currentUserId') currentUserId: string,
   ): Promise<Friendship> {
     return this.friendshipService.sendFriendRequest(friendId, currentUserId);
+  }
+
+  @Mutation(() => Friendship)
+  async acceptFriendRequest(
+    @Args('friendshipId') friendshipId: string,
+    @Args('currentUserId') currentUserId: string,
+  ): Promise<Friendship> {
+    return this.friendshipService.acceptFriendRequest(friendshipId, currentUserId);
+  }
+
+  @Mutation(() => Boolean)
+  async rejectFriendRequest(
+    @Args('friendshipId') friendshipId: string,
+    @Args('currentUserId') currentUserId: string,
+  ): Promise<boolean> {
+    await this.friendshipService.rejectFriendRequest(friendshipId, currentUserId);
+    return true;
   }
 }
