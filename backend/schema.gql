@@ -2,6 +2,55 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type UserType {
+  id: ID!
+  email: String!
+  password: String
+  full_name: String
+  avatar_url: String
+  bio: String
+  privacy: Privacy!
+  created_at: DateTime!
+  is_verified: Boolean!
+  otp_code: String
+  otp_expires_at: DateTime
+}
+
+enum Privacy {
+  PUBLIC
+  PRIVATE
+  FRIENDS
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Friendship {
+  friendshipId: ID!
+  user: UserType!
+  friend: UserType!
+  status: String!
+  createdAt: String!
+}
+
+type PaginatedUserResponse {
+  items: [UserType!]
+  total: Int!
+}
+
+type PaginatedFriendshipResponse {
+  items: [Friendship!]
+  total: Int!
+}
+
 type Query {
   hello: String!
+  getFriends(limit: Int, offset: Int, currentUserId: String!): PaginatedUserResponse!
+  getFriendRequests(limit: Int, offset: Int, currentUserId: String!): PaginatedFriendshipResponse!
+}
+
+type Mutation {
+  sendFriendRequest(friendId: String!, currentUserId: String!): Friendship!
 }
