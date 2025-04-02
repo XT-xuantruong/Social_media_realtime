@@ -6,7 +6,7 @@ import { User } from 'src/users/user.entity';
 import { AuthProvider } from './auth-provider.entity';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
-import { ResponseDto } from 'src/response.dto';
+import { ResponseDto } from 'src/dto/response.dto';
 import { MailService } from '../mailer/mailer.service';
 import { RefreshToken } from './refresh-token.entity';
 import { LoginDto } from './dto/login.dto';

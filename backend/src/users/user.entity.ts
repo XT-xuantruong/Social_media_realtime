@@ -11,6 +11,7 @@ import { RefreshToken } from 'src/auth/refresh-token.entity';
 import { Post } from 'src/posts/posts.entity';
 import { Like } from 'src/likes/likes.entity';
 import { Comment } from 'src/comments/comments.entity';
+import { Notification } from 'src/notifications/notifications.entity';
 
 @Entity('users')
 @ObjectType()
@@ -81,4 +82,8 @@ export class User {
   @OneToMany(() => Comment, (comment) => comment.user)
   @Field(() => [Comment], { nullable: true })
   comments: Comment[];
+
+  @OneToMany(() => Notification, (notification) => notification.user)
+  @Field(() => [Notification], { nullable: true })
+  notifications: Notification[];
 }

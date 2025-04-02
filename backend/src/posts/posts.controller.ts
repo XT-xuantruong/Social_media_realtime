@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Post as PostEntity } from './posts.entity';
-import { ResponseDto } from 'src/response.dto';
+import { ResponseDto } from 'src/dto/response.dto';
 import { CreatePostDto } from './dto/createPost.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UpdatePostDto } from './dto/updatePost.dto';
