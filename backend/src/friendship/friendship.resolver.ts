@@ -49,4 +49,13 @@ export class FriendshipResolver {
     await this.friendshipService.rejectFriendRequest(friendshipId, currentUserId);
     return true;
   }
+
+  @Mutation(() => Boolean)
+  async removeFriend(
+    @Args('friendshipId') friendshipId: string,
+    @Args('currentUserId') currentUserId: string,
+  ): Promise<boolean> {
+    await this.friendshipService.removeFriend(friendshipId, currentUserId);
+    return true;
+  }
 }
