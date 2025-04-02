@@ -136,4 +136,5 @@ type Mutation {
   unlikePost(postId: String!): String!
   createComment(postId: String!, content: String!): Comment!
   deleteComment(commentId: String!): String!
+  markNotificationAsRead(notificationId: String!): Notification!
 }

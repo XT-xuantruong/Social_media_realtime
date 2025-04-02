@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Notification } from './notifications.entity';
@@ -50,5 +50,23 @@ export class NotificationsService {
       endCursor,
       total,
     };
+  }
+  async markAsRead(
+    notificationId: string,
+    userId: string,
+  ): Promise<Notification> {
+    const notification = await this.notificationsRepository.findOne({
+      where: { notification_id: notificationId, user: { id: userId } },
+      relations: ['user'],
+    });
+
+    if (!notification) {
+      throw new NotFoundException(
+        'Notification not found or you do not have permission to update it',
+      );
+    }
+
+    notification.is_read = true;
+    return this.notificationsRepository.save(notification);
   }
 }
