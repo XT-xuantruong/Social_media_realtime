@@ -15,7 +15,6 @@ export interface UserCredentials {
   password: string;
 }
 
-
 export interface UpdateUserDto {
   full_name?: string;
   avatar_url?: string;

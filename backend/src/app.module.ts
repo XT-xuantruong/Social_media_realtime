@@ -10,11 +10,19 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MailerModule } from './mailer/mailer.module';
 import { UploadModule } from './upload/upload.module';
+<<<<<<< HEAD
 import { FriendshipResolver } from './friendship/friendship.resolver';
 import { FriendshipModule } from './friendship/friendship.module';
+=======
+import { PostsModule } from './posts/posts.module';
+import { LikesModule } from './likes/likes.module';
+import { CommentsModule } from './comments/comments.module';
+>>>>>>> develop
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -33,7 +41,13 @@ import { FriendshipModule } from './friendship/friendship.module';
     UsersModule,
     MailerModule,
     UploadModule,
+<<<<<<< HEAD
     FriendshipModule,
+=======
+    PostsModule,
+    LikesModule,
+    CommentsModule,
+>>>>>>> develop
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],
