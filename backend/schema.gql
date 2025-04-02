@@ -43,6 +43,15 @@ type Post {
   comments: [Comment!]
 }
 
+type Notification {
+  notification_id: ID!
+  user: User!
+  type: String!
+  related_id: String!
+  is_read: Boolean!
+  created_at: DateTime!
+}
+
 type User {
   id: ID!
   email: String!
@@ -59,6 +68,7 @@ type User {
   posts: [Post!]
   likes: [Like!]
   comments: [Comment!]
+  notifications: [Notification!]
 }
 
 type AuthProvider {
@@ -98,10 +108,27 @@ type PostsListResponse {
   pageInfo: PageInfo!
 }
 
+type NotificationEdge {
+  node: Notification!
+  cursor: String!
+}
+
+type PaginatedResponse {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type NotificationResponse {
+  message: String!
+  status: Int!
+  data: PaginatedResponse!
+}
+
 type Query {
   hello: String!
   getPost(postId: String!): PostResponse!
   getPosts(limit: Int!, cursor: String): PostsListResponse!
+  getNotifications(limit: Int, cursor: String): NotificationResponse!
 }
 
 type Mutation {

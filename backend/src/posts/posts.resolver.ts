@@ -4,7 +4,7 @@ import { PostsListResponse, PostResponse } from './dto/postResponse.dto';
 import { LikesService } from 'src/likes/likes.service';
 import { UseGuards } from '@nestjs/common';
 import { User } from 'src/users/user.entity';
-import { CurrentUser } from 'src/current-user/current-user.decorator';
+import { CurrentUser } from 'src/auth/current-user.decorator';
 import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
 
 @Resolver()
