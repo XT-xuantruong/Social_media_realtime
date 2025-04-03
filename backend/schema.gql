@@ -148,6 +148,7 @@ type Mutation {
   sendFriendRequest(friendId: String!, currentUserId: String!): Friendship!
   acceptFriendRequest(friendshipId: String!, currentUserId: String!): Friendship!
   rejectFriendRequest(friendshipId: String!, currentUserId: String!): Boolean!
+  removeFriend(friendshipId: String!, currentUserId: String!): Boolean!
   likePost(postId: String!): String!
   unlikePost(postId: String!): String!
   createComment(postId: String!, content: String!): Comment!

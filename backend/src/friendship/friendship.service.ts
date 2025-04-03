@@ -131,4 +131,26 @@ const mappedItems = plainToClass(
 
     await this.friendshipRepository.remove(friendship);
   }
+
+  async removeFriend(friendshipId: string, currentUserId: string): Promise<void> {
+    const friendship = await this.friendshipRepository.findOne({
+      where: { friendshipId },
+      relations: ['user', 'friend'],
+    });
+
+    if (!friendship) {
+      throw new NotFoundException('Friendship not found');
+    }
+
+    // Kiểm tra xem người dùng hiện tại có phải là một trong hai bên của mối quan hệ không
+    if (friendship.user.id !== currentUserId && friendship.friend.id !== currentUserId) {
+      throw new UnauthorizedException('You are not authorized to remove this friendship');
+    }
+
+    if (friendship.status !== 'accepted') {
+      throw new BadRequestException('This relationship is not an accepted friendship');
+    }
+
+    await this.friendshipRepository.remove(friendship);
+  }
 }
