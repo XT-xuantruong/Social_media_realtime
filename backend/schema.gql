@@ -69,6 +69,44 @@ type AuthProvider {
   created_at: DateTime!
 }
 
+type UserType {
+  id: ID!
+  email: String!
+  password: String
+  full_name: String
+  avatar_url: String
+  bio: String
+  privacy: Privacy!
+  created_at: DateTime!
+  is_verified: Boolean!
+  otp_code: String
+  otp_expires_at: DateTime
+}
+
+enum Privacy {
+  PUBLIC
+  PRIVATE
+  FRIENDS
+}
+
+type Friendship {
+  friendshipId: ID!
+  user: UserType!
+  friend: UserType!
+  status: String!
+  createdAt: String!
+}
+
+type PaginatedUserResponse {
+  items: [UserType!]
+  total: Int!
+}
+
+type PaginatedFriendshipResponse {
+  items: [Friendship!]
+  total: Int!
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
@@ -100,11 +138,16 @@ type PostsListResponse {
 
 type Query {
   hello: String!
+  getFriends(limit: Int, offset: Int, currentUserId: String!): PaginatedUserResponse!
+  getFriendRequests(limit: Int, offset: Int, currentUserId: String!): PaginatedFriendshipResponse!
   getPost(postId: String!): PostResponse!
   getPosts(limit: Int!, cursor: String): PostsListResponse!
 }
 
 type Mutation {
+  sendFriendRequest(friendId: String!, currentUserId: String!): Friendship!
+  acceptFriendRequest(friendshipId: String!, currentUserId: String!): Friendship!
+  rejectFriendRequest(friendshipId: String!, currentUserId: String!): Boolean!
   likePost(postId: String!): String!
   unlikePost(postId: String!): String!
   createComment(postId: String!, content: String!): Comment!
