@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { SearchIcon, MessageCircleIcon } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { SearchIcon, MessageCircleIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +10,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import NotificationDropdown from './NotificationDropdown';
+} from "@/components/ui/dropdown-menu";
+import NotificationDropdown from "./NotificationDropdown";
 
 export default function Header() {
+  const navigate = useNavigate();
+
+  const handleOpenMessenger = () => {
+    navigate("/messenger");
+  };
+
   return (
     <header className="bg-white shadow-md z-20 w-full fixed top-0 left-0 right-0">
       <div className="mx-auto px-5 py-1 flex items-center justify-between">
@@ -43,6 +49,7 @@ export default function Header() {
             size="icon"
             className="h-14 w-14 rounded-full hover:bg-gray-100 transition-colors"
             aria-label="Messenger"
+            onClick={handleOpenMessenger}
           >
             <MessageCircleIcon className="size-8 text-gray-600" />
           </Button>
@@ -55,10 +62,7 @@ export default function Header() {
                 aria-label="Profile"
               >
                 <Avatar className="h-9 w-9">
-                  <AvatarImage
-                    src="https://github.com/shadcn.png"
-                    alt="User avatar"
-                  />
+                  <AvatarImage src="https://github.com/shadcn.png" alt="User avatar" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
               </Button>
