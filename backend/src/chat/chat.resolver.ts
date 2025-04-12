@@ -1,0 +1,65 @@
+import { Resolver, Mutation, Args, Query, Context, Int } from '@nestjs/graphql';
+import { ChatService } from './chat.service';
+import { SendMessageInput } from './dto/send-message.dto';
+import { MessageResponse, MessagesListResponse } from './dto/response.type';
+import { UseGuards } from '@nestjs/common';
+import { JwtAccessGuard } from '../auth/jwt-access.guard';
+
+@Resolver()
+export class ChatResolver {
+  constructor(
+    private readonly chatService: ChatService,
+  ) {}
+
+  @Mutation(() => MessageResponse)
+  @UseGuards(JwtAccessGuard)
+  async sendMessage(
+    @Args('input') input: SendMessageInput,
+    @Context() context: any,
+  ): Promise<MessageResponse> {
+    try {
+      const userId = context.req.user.userId;
+      const message = await this.chatService.sendMessage(input, userId);
+      return new MessageResponse('Message sent successfully', 201, message);
+    } catch (error) {
+      return new MessageResponse(error.message, error.status || 400, null);
+    }
+  }
+
+  @Query(() => MessagesListResponse)
+@UseGuards(JwtAccessGuard)
+async getMessages(
+  @Args('room_id') roomId: string,
+  @Args('limit', { type: () => Int, defaultValue: 20 }) limit: number,
+  @Context() context: any,
+  @Args('cursor', { type: () => String, nullable: true }) cursor?: string,
+): Promise<MessagesListResponse> {
+  try {
+    const userId = context.req.user.userId;
+    const { edges, pageInfo } = await this.chatService.getMessages(
+      roomId,
+      userId,
+      limit,
+      cursor,
+    );
+    
+    return new MessagesListResponse(
+      'Messages retrieved successfully', 
+      200, 
+      edges, 
+      pageInfo
+    );
+  } catch (error) {
+    return new MessagesListResponse(
+      error.message,
+      error.status || 400,
+      [],
+      {
+        endCursor: null,
+        hasNextPage: false,
+        total: 0,
+      },
+    );
+  }
+}
+}
