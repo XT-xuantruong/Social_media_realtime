@@ -1,11 +1,15 @@
 // src/chat/chat.service.ts
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { ChatRoom } from './chat-rooms.entity';
 import { ChatRoomUser } from './chat-room-users.entity';
+import { Message } from './messages.entity';
 import { CreateChatRoomDto } from './dto/createChatRoom.dto';
-import { UsersService } from 'src/users/users.service';
+import { SendMessageInput } from './dto/send-message.dto';
+import { UsersService } from '../users/users.service';
+import { MessageEdge } from './dto/response.type';
+import { PageInfo } from 'src/dto/graphql.response.dto';
 
 @Injectable()
 export class ChatService {
@@ -14,6 +18,8 @@ export class ChatService {
     private readonly chatRoomRepository: Repository<ChatRoom>,
     @InjectRepository(ChatRoomUser)
     private readonly chatRoomUserRepository: Repository<ChatRoomUser>,
+    @InjectRepository(Message)
+    private readonly messageRepository: Repository<Message>,
     private readonly usersService: UsersService,
   ) {}
 
@@ -72,10 +78,11 @@ export class ChatService {
   }
 
   private async createAndSaveRoom(dto: CreateChatRoomDto): Promise<ChatRoom> {
-    const room = this.chatRoomRepository.create({
-      is_group: dto.is_group ? 1 : 0, // Chuyển boolean thành 0/1
+    const roomData = {
+      is_group: (dto.is_group ?? false) ? 1 : 0,
       name: dto.name?.trim(),
-    });
+    };
+    const room = this.chatRoomRepository.create(roomData as ChatRoom);
     return this.chatRoomRepository.save(room);
   }
 
@@ -89,5 +96,97 @@ export class ChatService {
         await this.chatRoomUserRepository.save(roomUser);
       }),
     );
+  }
+
+  async sendMessage(input: SendMessageInput, senderId: string): Promise<Message> {
+    const room = await this.chatRoomRepository.findOne({
+      where: { room_id: input.room_id },
+      relations: ['roomUsers', 'roomUsers.user'],
+    });
+    if (!room) {
+      throw new NotFoundException('Chat room not found');
+    }
+
+    const isMember = room.roomUsers.some((ru) => ru.user.id === senderId);
+    if (!isMember) {
+      throw new BadRequestException('You are not a member of this room');
+    }
+
+    const sender = await this.usersService.findById(senderId);
+
+    if (!input.content.trim()) {
+      throw new BadRequestException('Message content cannot be empty');
+    }
+
+    const message = this.messageRepository.create({
+      content: input.content.trim(),
+      room,
+      sender,
+    });
+    return this.messageRepository.save(message);
+  }
+
+  async getMessages(
+    roomId: string,
+    userId: string,
+    limit: number = 20,
+    cursor?: string,
+  ): Promise<{ edges: MessageEdge[]; pageInfo: PageInfo }> {
+    // Xác thực phòng và thành viên
+    const room = await this.chatRoomRepository.findOne({
+      where: { room_id: roomId },
+      relations: ['roomUsers', 'roomUsers.user'],
+    });
+    
+    if (!room) {
+      throw new NotFoundException('Chat room not found');
+    }
+    
+    if (!room.roomUsers.some(ru => ru.user.id === userId)) {
+      throw new BadRequestException('You are not a member of this room');
+    }
+  
+    // Xây dựng truy vấn
+    const query = this.messageRepository
+      .createQueryBuilder('message')
+      .leftJoinAndSelect('message.sender', 'sender')
+      .where('message.roomRoomId = :roomId', { roomId })
+      .orderBy('message.created_at', 'DESC') // Tin nhắn mới nhất đầu tiên
+      .take(limit + 1); // Lấy thêm 1 để kiểm tra hasNextPage
+  
+    // Áp dụng cursor nếu có
+    if (cursor) {
+      try {
+        const cursorDate = new Date(Buffer.from(cursor, 'base64').toString('ascii'));
+        query.andWhere('message.created_at < :cursor', { cursor: cursorDate });
+      } catch (error) {
+        throw new BadRequestException('Invalid cursor format');
+      }
+    }
+  
+    const messages = await query.getMany(); 
+    
+    // Tính tổng số tin nhắn
+    const total = await this.messageRepository.count({ 
+      where: { room: { room_id: roomId } } 
+    });
+  
+    // Logic phân trang
+    const hasNextPage = messages.length > limit;
+    const messagesToReturn = messages.slice(0, limit);
+    
+    const edges = messagesToReturn.map(message => ({
+      node: message,
+      cursor: Buffer.from(message.created_at.toISOString()).toString('base64'),
+    }));
+  
+    return {
+      edges,
+      pageInfo: {
+        endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+        hasNextPage,
+        total,
+      },
+    };
   }
 }

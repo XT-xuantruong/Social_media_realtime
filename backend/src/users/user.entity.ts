@@ -92,7 +92,7 @@ export class User {
   @Field(() => [ChatRoomUser], { nullable: true })
   chatRoomUsers: ChatRoomUser[];
 
-  @OneToMany(() => Message, (message) => message.user)
+  @OneToMany(() => Message, (message) => message.sender)
   @Field(() => [Message], { nullable: true })
   messages: Message[];
 }

@@ -9,6 +9,9 @@ import { UploadService } from 'src/upload/upload.service';
 
 @Injectable()
 export class UsersService {
+  findOneById(senderId: string) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
