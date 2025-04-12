@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
@@ -50,6 +50,16 @@ export class UsersService {
       throw new BadRequestException('User not found');
     }
     return user;
+  }
+
+  async findManyByIds(userIds: string[]): Promise<User[]> {
+    const users = await this.usersRepository.findBy({ id: In(userIds) });
+    const foundIds = users.map((user) => user.id);
+    const missingIds = userIds.filter((id) => !foundIds.includes(id));
+    if (missingIds.length > 0) {
+      throw new BadRequestException(`Users not found: ${missingIds.join(', ')}`);
+    }
+    return users;
   }
 
   async update(user: User): Promise<User> {

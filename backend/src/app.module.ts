@@ -15,6 +15,7 @@ import { LikesModule } from './likes/likes.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { JwtService } from '@nestjs/jwt';
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,7 +26,7 @@ import { JwtService } from '@nestjs/jwt';
       host: process.env.DB_HOST,
       port: Number(process.env.DB_PORT),
       username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
+      password: process.env.DB_PASSWORD,  
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
@@ -42,6 +43,7 @@ import { JwtService } from '@nestjs/jwt';
     LikesModule,
     CommentsModule,
     NotificationsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

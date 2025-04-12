@@ -12,13 +12,14 @@ import { Post } from 'src/posts/posts.entity';
 import { Like } from 'src/likes/likes.entity';
 import { Comment } from 'src/comments/comments.entity';
 import { Notification } from 'src/notifications/notifications.entity';
-
+import { ChatRoomUser } from 'src/chat/chat-room-users.entity';
+import { Message } from 'src/chat/messages.entity';
 @Entity('users')
 @ObjectType()
 export class User {
   @PrimaryGeneratedColumn('uuid')
   @Field(() => ID)
-  id: string;
+  id: string; // CHAR(36) UUID làm khóa chính
 
   @Column({ unique: true, length: 255 })
   @Field()
@@ -86,4 +87,12 @@ export class User {
   @OneToMany(() => Notification, (notification) => notification.user)
   @Field(() => [Notification], { nullable: true })
   notifications: Notification[];
+
+  @OneToMany(() => ChatRoomUser, (chatRoomUser) => chatRoomUser.user)
+  @Field(() => [ChatRoomUser], { nullable: true })
+  chatRoomUsers: ChatRoomUser[];
+
+  @OneToMany(() => Message, (message) => message.user)
+  @Field(() => [Message], { nullable: true })
+  messages: Message[];
 }
