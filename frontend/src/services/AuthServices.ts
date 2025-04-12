@@ -33,7 +33,7 @@ export const authServices = baseRestApi.injectEndpoints({
           console.log('Login response:', authData);
 
           dispatch(
-            setCredentials({
+            setCredentials({ 
               accessToken: authData.data.accessToken,
               refreshToken: authData.data.refreshToken,
             } as { accessToken: string; refreshToken: string })
