@@ -1,11 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Like, Repository } from 'typeorm';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto } from 'src/auth/dto/register.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UploadService } from 'src/upload/upload.service';
+import { UserEdge } from './dto/userResponse.dto';
+import { PageInfo } from 'src/dto/graphql.response.dto';
 
 @Injectable()
 export class UsersService {
@@ -89,6 +91,60 @@ export class UsersService {
     }
 
     return await this.usersRepository.save(user);
+  }
+
+  async searchUsers(
+    query: string,
+    limit: number = 10,
+    cursor?: string,
+  ): Promise<{ edges: UserEdge[]; pageInfo: PageInfo }> {
+    try {
+      if (!query.trim()) {
+        throw new BadRequestException('Query không được rỗng');
+      }
+      if (limit <= 0) {
+        throw new BadRequestException('Limit phải lớn hơn 0');
+      }
+
+      const queryBuilder = this.usersRepository
+        .createQueryBuilder('user')
+        .where('LOWER(user.full_name) LIKE LOWER(:query)', { query: `%${query}%` })
+        .orderBy('user.created_at', 'DESC')
+        .take(limit + 1);
+
+      if (cursor) {
+        try {
+          const cursorDate = new Date(Buffer.from(cursor, 'base64').toString('ascii'));
+          queryBuilder.andWhere('user.created_at < :cursor', { cursor: cursorDate });
+        } catch (error) {
+          throw new BadRequestException('Invalid cursor format');
+        }
+      }
+
+      const users = await queryBuilder.getMany();
+      const total = await this.usersRepository.count({
+        where: { full_name: Like(`%${query}%`) },
+      });
+
+      const hasNextPage = users.length > limit;
+      const usersToReturn = users.slice(0, limit);
+
+      const edges = usersToReturn.map((user) => ({
+        node: user,
+        cursor: Buffer.from(user.created_at.toISOString()).toString('base64'),
+      }));
+
+      return {
+        edges,
+        pageInfo: {
+          endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+          hasNextPage,
+          total,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Không thể tìm kiếm người dùng: ${error.message}`);
+    }
   }
 
 }
