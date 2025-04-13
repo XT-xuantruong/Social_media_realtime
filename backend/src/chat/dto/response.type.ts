@@ -1,4 +1,3 @@
-// src/chat/dto/response.type.ts
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { Message } from '../messages.entity';
 import { PageInfo } from 'src/dto/graphql.response.dto';

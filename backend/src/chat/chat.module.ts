@@ -9,13 +9,15 @@ import { UsersModule } from 'src/users/users.module';
 // import { ChatResolver } from './chat.resolver'; // Nếu dùng GraphQL
 import { ChatResolver } from './chat.resolver';
 import { Message } from './messages.entity';
+import { ChatGateway } from './chat.gateway';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ChatRoom, ChatRoomUser, User, Message]),
-    UsersModule
+    UsersModule,
   ],
   controllers: [ChatController],
-  providers: [ChatService, ChatResolver],
+  providers: [ChatService, ChatResolver, ChatGateway, JwtService],
 })
 export class ChatModule {}

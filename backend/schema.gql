@@ -52,6 +52,29 @@ type Notification {
   created_at: DateTime!
 }
 
+type Message {
+  message_id: ID!
+  content: String
+  created_at: DateTime!
+  room: ChatRoom!
+  sender: User!
+}
+
+type ChatRoom {
+  room_id: ID!
+  is_group: Boolean!
+  name: String
+  created_at: DateTime!
+  roomUsers: [ChatRoomUser!]
+  messages: [Message!]
+}
+
+type ChatRoomUser {
+  room_user_id: ID!
+  user: User
+  room: ChatRoom
+}
+
 type User {
   id: ID!
   email: String!
@@ -69,6 +92,8 @@ type User {
   likes: [Like!]
   comments: [Comment!]
   notifications: [Notification!]
+  chatRoomUsers: [ChatRoomUser!]
+  messages: [Message!]
 }
 
 type AuthProvider {
@@ -162,6 +187,34 @@ type NotificationResponse {
   data: PaginatedResponse!
 }
 
+type MessageEdge {
+  node: Message!
+  cursor: String!
+}
+
+type MessageResponse {
+  message: String!
+  status: Int!
+  data: Message
+}
+
+type MessagesListResponse {
+  message: String!
+  status: Int!
+  edges: [MessageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ChatRoomEdge {
+  node: ChatRoom!
+  cursor: String!
+}
+
+type PaginatedChatRoomsResponse {
+  edges: [ChatRoomEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   hello: String!
   getFriends(limit: Int, offset: Int, currentUserId: String!): PaginatedUserResponse!
@@ -169,6 +222,8 @@ type Query {
   getPost(postId: String!): PostResponse!
   getPosts(limit: Int!, cursor: String): PostsListResponse!
   getNotifications(limit: Int, cursor: String): NotificationResponse!
+  getMessages(room_id: String!, limit: Int! = 20, cursor: String): MessagesListResponse!
+  getChatRooms(limit: Int! = 10, cursor: String): PaginatedChatRoomsResponse!
 }
 
 type Mutation {
@@ -181,4 +236,10 @@ type Mutation {
   markNotificationAsRead(notificationId: String!): Notification!
   createComment(postId: String!, content: String!): Comment!
   deleteComment(commentId: String!): String!
+  sendMessage(input: SendMessageInput!): MessageResponse!
+}
+
+input SendMessageInput {
+  room_id: ID!
+  content: String!
 }

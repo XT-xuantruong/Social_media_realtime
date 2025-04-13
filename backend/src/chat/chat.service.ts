@@ -1,5 +1,9 @@
 // src/chat/chat.service.ts
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { ChatRoom } from './chat-rooms.entity';
@@ -10,20 +14,24 @@ import { SendMessageInput } from './dto/send-message.dto';
 import { UsersService } from '../users/users.service';
 import { MessageEdge } from './dto/response.type';
 import { PageInfo } from 'src/dto/graphql.response.dto';
+import { PaginatedChatRoomsResponse } from './dto/chatroom.dto';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectRepository(ChatRoom)
-    private readonly chatRoomRepository: Repository<ChatRoom>,
+    public readonly chatRoomRepository: Repository<ChatRoom>,
     @InjectRepository(ChatRoomUser)
-    private readonly chatRoomUserRepository: Repository<ChatRoomUser>,
+    public readonly chatRoomUserRepository: Repository<ChatRoomUser>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
     private readonly usersService: UsersService,
   ) {}
 
-  async createChatRoom(dto: CreateChatRoomDto, currentUserId: string): Promise<ChatRoom> {
+  async createChatRoom(
+    dto: CreateChatRoomDto,
+    currentUserId: string,
+  ): Promise<ChatRoom> {
     await this.validateRoomCreation(dto, currentUserId);
     await this.checkExistingRoom(dto, currentUserId);
     const room = await this.createAndSaveRoom(dto);
@@ -31,23 +39,33 @@ export class ChatService {
     return room;
   }
 
-  private async validateRoomCreation(dto: CreateChatRoomDto, currentUserId: string): Promise<void> {
+  private async validateRoomCreation(
+    dto: CreateChatRoomDto,
+    currentUserId: string,
+  ): Promise<void> {
     const uniqueUserIds = [...new Set([currentUserId, ...dto.user_ids])];
     await this.usersService.findManyByIds(uniqueUserIds);
     if (!dto.is_group && uniqueUserIds.length !== 2) {
-      throw new BadRequestException('Direct chat must include exactly one other user');
+      throw new BadRequestException(
+        'Direct chat must include exactly one other user',
+      );
     }
     if (dto.is_group) {
       if (!dto.name?.trim()) {
         throw new BadRequestException('Group chat must have a name');
       }
       if (uniqueUserIds.length < 3) {
-        throw new BadRequestException('Group chat must include at least two other users');
+        throw new BadRequestException(
+          'Group chat must include at least two other users',
+        );
       }
     }
   }
 
-  private async checkExistingRoom(dto: CreateChatRoomDto, currentUserId: string): Promise<void> {
+  private async checkExistingRoom(
+    dto: CreateChatRoomDto,
+    currentUserId: string,
+  ): Promise<void> {
     const uniqueUserIds = [...new Set([currentUserId, ...dto.user_ids])].sort();
     const userCount = uniqueUserIds.length;
 
@@ -59,19 +77,21 @@ export class ChatService {
       .getMany();
 
     for (const room of rooms) {
-      const roomUserIds = room.roomUsers
-        .map((ru) => ru.user.id)
-        .sort();
+      const roomUserIds = room.roomUsers.map((ru) => ru.user.id).sort();
 
       if (
         roomUserIds.length === userCount &&
         roomUserIds.every((id, index) => id === uniqueUserIds[index])
       ) {
         if (dto.is_group && room.is_group && room.name === dto.name?.trim()) {
-          throw new BadRequestException('Group chat with this name and users already exists');
+          throw new BadRequestException(
+            'Group chat with this name and users already exists',
+          );
         }
         if (!dto.is_group && !room.is_group) {
-          throw new BadRequestException('Direct chat with these users already exists');
+          throw new BadRequestException(
+            'Direct chat with these users already exists',
+          );
         }
       }
     }
@@ -86,7 +106,11 @@ export class ChatService {
     return this.chatRoomRepository.save(room);
   }
 
-  private async addUsersToRoom(room: ChatRoom, currentUserId: string, userIds: string[]): Promise<void> {
+  private async addUsersToRoom(
+    room: ChatRoom,
+    currentUserId: string,
+    userIds: string[],
+  ): Promise<void> {
     const uniqueUserIds = [...new Set([currentUserId, ...userIds])];
     const users = await this.usersService.findManyByIds(uniqueUserIds);
 
@@ -98,7 +122,10 @@ export class ChatService {
     );
   }
 
-  async sendMessage(input: SendMessageInput, senderId: string): Promise<Message> {
+  async sendMessage(
+    input: SendMessageInput,
+    senderId: string,
+  ): Promise<Message> {
     const room = await this.chatRoomRepository.findOne({
       where: { room_id: input.room_id },
       relations: ['roomUsers', 'roomUsers.user'],
@@ -137,15 +164,15 @@ export class ChatService {
       where: { room_id: roomId },
       relations: ['roomUsers', 'roomUsers.user'],
     });
-    
+
     if (!room) {
       throw new NotFoundException('Chat room not found');
     }
-    
-    if (!room.roomUsers.some(ru => ru.user.id === userId)) {
+
+    if (!room.roomUsers.some((ru) => ru.user.id === userId)) {
       throw new BadRequestException('You are not a member of this room');
     }
-  
+
     // Xây dựng truy vấn
     const query = this.messageRepository
       .createQueryBuilder('message')
@@ -153,33 +180,90 @@ export class ChatService {
       .where('message.roomRoomId = :roomId', { roomId })
       .orderBy('message.created_at', 'DESC') // Tin nhắn mới nhất đầu tiên
       .take(limit + 1); // Lấy thêm 1 để kiểm tra hasNextPage
-  
+
     // Áp dụng cursor nếu có
     if (cursor) {
       try {
-        const cursorDate = new Date(Buffer.from(cursor, 'base64').toString('ascii'));
+        const cursorDate = new Date(
+          Buffer.from(cursor, 'base64').toString('ascii'),
+        );
         query.andWhere('message.created_at < :cursor', { cursor: cursorDate });
       } catch (error) {
         throw new BadRequestException('Invalid cursor format');
       }
     }
-  
-    const messages = await query.getMany(); 
-    
+
+    const messages = await query.getMany();
+
     // Tính tổng số tin nhắn
-    const total = await this.messageRepository.count({ 
-      where: { room: { room_id: roomId } } 
+    const total = await this.messageRepository.count({
+      where: { room: { room_id: roomId } },
     });
-  
+
     // Logic phân trang
     const hasNextPage = messages.length > limit;
     const messagesToReturn = messages.slice(0, limit);
-    
-    const edges = messagesToReturn.map(message => ({
+
+    const edges = messagesToReturn.map((message) => ({
       node: message,
       cursor: Buffer.from(message.created_at.toISOString()).toString('base64'),
     }));
-  
+
+    return {
+      edges,
+      pageInfo: {
+        endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+        hasNextPage,
+        total,
+      },
+    };
+  }
+
+  async getChatRooms(
+    userId: string,
+    limit: number = 10,
+    cursor?: string,
+  ): Promise<PaginatedChatRoomsResponse> {
+    // Xây dựng truy vấn
+    const query = this.chatRoomRepository
+      .createQueryBuilder('room')
+      .leftJoinAndSelect('room.roomUsers', 'roomUsers')
+      .leftJoinAndSelect('roomUsers.user', 'user')
+      .where('user.id = :userId', { userId })
+      .orderBy('room.created_at', 'DESC') // Phòng mới nhất trước
+      .take(limit + 1); // Lấy thêm 1 để kiểm tra hasNextPage
+
+    // Áp dụng cursor nếu có
+    if (cursor) {
+      try {
+        const cursorDate = new Date(
+          Buffer.from(cursor, 'base64').toString('ascii'),
+        );
+        query.andWhere('room.created_at < :cursor', { cursor: cursorDate });
+      } catch (error) {
+        throw new BadRequestException('Invalid cursor format');
+      }
+    }
+
+    const rooms = await query.getMany();
+
+    // Tính tổng số phòng
+    const total = await this.chatRoomRepository
+      .createQueryBuilder('room')
+      .leftJoin('room.roomUsers', 'roomUsers')
+      .leftJoin('roomUsers.user', 'user')
+      .where('user.id = :userId', { userId })
+      .getCount();
+
+    // Logic phân trang
+    const hasNextPage = rooms.length > limit;
+    const roomsToReturn = rooms.slice(0, limit);
+
+    const edges = roomsToReturn.map((room) => ({
+      node: room,
+      cursor: Buffer.from(room.created_at.toISOString()).toString('base64'),
+    }));
+
     return {
       edges,
       pageInfo: {
