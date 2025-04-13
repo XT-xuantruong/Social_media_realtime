@@ -5,7 +5,7 @@ import LoginPage from '@/pages/auth/LoginPage';
 import OtpFormPage from '@/pages/auth/OtpFormPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import Home from '@/pages/Home';
-import MessengerPage from '@/layouts/MessengerLayout';
+import MessengerPage from '@/pages/MessagerPage';
 import ProfilePage from '@/pages/user/Profile';
 
 export const publicRoutes = [
@@ -14,6 +14,5 @@ export const publicRoutes = [
   { path: '/login', component: LoginPage, layout: AuthLayout },
   { path: '/otp', component: OtpFormPage, layout: AuthLayout },
   { path: '/', component: Home, layout: MainSidebarLayout },
-  { path: "/messenger", component: MessengerPage, layout: MessengerLayout },
-  
+  { path: '/messenger', component: MessengerPage, layout: MessengerLayout },
 ];

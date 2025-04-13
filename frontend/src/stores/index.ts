@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { baseRestApi } from '@/services/rest_api/baseRestApi';
 import { baseGraphqlApi } from '@/services/graphql/baseGraphqlApi';
 import authReducer from './authSlice';
+import chatReducer from './chatSlice';
 import { persistReducer, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from 'redux';
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   [baseRestApi.reducerPath]: baseRestApi.reducer,
   [baseGraphqlApi.reducerPath]: baseGraphqlApi.reducer,
   auth: authReducer,
+  chat: chatReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -1,11 +1,10 @@
-// src/chat/chat.service.ts
 import {
   Injectable,
   BadRequestException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { ChatRoom } from './chat-rooms.entity';
 import { ChatRoomUser } from './chat-room-users.entity';
 import { Message } from './messages.entity';
@@ -78,7 +77,6 @@ export class ChatService {
 
     for (const room of rooms) {
       const roomUserIds = room.roomUsers.map((ru) => ru.user.id).sort();
-
       if (
         roomUserIds.length === userCount &&
         roomUserIds.every((id, index) => id === uniqueUserIds[index])
@@ -99,7 +97,7 @@ export class ChatService {
 
   private async createAndSaveRoom(dto: CreateChatRoomDto): Promise<ChatRoom> {
     const roomData = {
-      is_group: (dto.is_group ?? false) ? 1 : 0,
+      is_group: dto.is_group,
       name: dto.name?.trim(),
     };
     const room = this.chatRoomRepository.create(roomData as ChatRoom);
@@ -150,7 +148,13 @@ export class ChatService {
       room,
       sender,
     });
-    return this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(message);
+
+    // Tải lại message với đầy đủ quan hệ
+    return this.messageRepository.findOne({
+      where: { message_id: savedMessage.message_id },
+      relations: ['sender', 'room'],
+    });
   }
 
   async getMessages(
@@ -159,7 +163,6 @@ export class ChatService {
     limit: number = 20,
     cursor?: string,
   ): Promise<{ edges: MessageEdge[]; pageInfo: PageInfo }> {
-    // Xác thực phòng và thành viên
     const room = await this.chatRoomRepository.findOne({
       where: { room_id: roomId },
       relations: ['roomUsers', 'roomUsers.user'],
@@ -173,15 +176,14 @@ export class ChatService {
       throw new BadRequestException('You are not a member of this room');
     }
 
-    // Xây dựng truy vấn
     const query = this.messageRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.sender', 'sender')
+      .leftJoinAndSelect('message.room', 'room')
       .where('message.roomRoomId = :roomId', { roomId })
-      .orderBy('message.created_at', 'DESC') // Tin nhắn mới nhất đầu tiên
-      .take(limit + 1); // Lấy thêm 1 để kiểm tra hasNextPage
+      .orderBy('message.created_at', 'DESC')
+      .take(limit + 1);
 
-    // Áp dụng cursor nếu có
     if (cursor) {
       try {
         const cursorDate = new Date(
@@ -195,12 +197,10 @@ export class ChatService {
 
     const messages = await query.getMany();
 
-    // Tính tổng số tin nhắn
     const total = await this.messageRepository.count({
       where: { room: { room_id: roomId } },
     });
 
-    // Logic phân trang
     const hasNextPage = messages.length > limit;
     const messagesToReturn = messages.slice(0, limit);
 
@@ -224,16 +224,16 @@ export class ChatService {
     limit: number = 10,
     cursor?: string,
   ): Promise<PaginatedChatRoomsResponse> {
-    // Xây dựng truy vấn
     const query = this.chatRoomRepository
       .createQueryBuilder('room')
       .leftJoinAndSelect('room.roomUsers', 'roomUsers')
       .leftJoinAndSelect('roomUsers.user', 'user')
+      .leftJoinAndSelect('room.messages', 'messages')
+      .leftJoinAndSelect('messages.sender', 'sender')
       .where('user.id = :userId', { userId })
-      .orderBy('room.created_at', 'DESC') // Phòng mới nhất trước
-      .take(limit + 1); // Lấy thêm 1 để kiểm tra hasNextPage
+      .orderBy('room.created_at', 'DESC')
+      .take(limit + 1);
 
-    // Áp dụng cursor nếu có
     if (cursor) {
       try {
         const cursorDate = new Date(
@@ -247,7 +247,6 @@ export class ChatService {
 
     const rooms = await query.getMany();
 
-    // Tính tổng số phòng
     const total = await this.chatRoomRepository
       .createQueryBuilder('room')
       .leftJoin('room.roomUsers', 'roomUsers')
@@ -255,7 +254,6 @@ export class ChatService {
       .where('user.id = :userId', { userId })
       .getCount();
 
-    // Logic phân trang
     const hasNextPage = rooms.length > limit;
     const roomsToReturn = rooms.slice(0, limit);
 
