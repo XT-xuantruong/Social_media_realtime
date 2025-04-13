@@ -1,7 +1,7 @@
 import { baseRestApi } from './baseRestApi';
 import { UpdateUserDto, UserInfo } from '@/interfaces/user';
 import { ApiResponse } from '@/interfaces/apiResponse';
-import { RootState } from '@/stores';
+// import { RootState } from '@/stores';
 import { setUser } from '@/stores/authSlice';
 
 const entity = 'users';
@@ -19,7 +19,7 @@ export const userServices = baseRestApi.injectEndpoints({
       }),
     }),
     getById: builder.query<{ data: UserInfo; message: string }, string>({
-      query: (id='') => ({
+      query: (id = '') => ({
         url: `${entity}/${id}`,
         method: 'GET',
       }),
@@ -53,16 +53,16 @@ export const userServices = baseRestApi.injectEndpoints({
         data: response.data,
         message: response.message,
       }),
-      async onQueryStarted(_, { dispatch, queryFulfilled, getState }) {
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
-          const { data } = await queryFulfilled; 
-          const state = getState() as RootState; 
-          const accessToken = state.auth.token?.accessToken || '';
-          const refreshToken = state.auth.token?.refreshToken || '';
+          const { data } = await queryFulfilled;
+          // const state = getState() as RootState;
+          // const accessToken = state.auth.token?.accessToken || '';
+          // const refreshToken = state.auth.token?.refreshToken || '';
 
           dispatch(
             setUser({
-              user: data.data, 
+              user: data.data,
             })
           );
         } catch (error) {
@@ -72,4 +72,5 @@ export const userServices = baseRestApi.injectEndpoints({
     }),
   }),
 });
-export const { useGetMeQuery, useUpdateUserMutation, useGetByIdQuery } = userServices;
+export const { useGetMeQuery, useUpdateUserMutation, useGetByIdQuery } =
+  userServices;

@@ -33,7 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   useGetByIdQuery,
   useUpdateUserMutation,
-} from '@/services/UserSerivces';
+} from '@/services/rest_api/UserSerivces';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

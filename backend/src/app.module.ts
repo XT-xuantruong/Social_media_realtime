@@ -14,6 +14,8 @@ import { FriendshipModule } from './friendship/friendship.module';
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
 import { CommentsModule } from './comments/comments.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -41,6 +43,7 @@ import { CommentsModule } from './comments/comments.module';
     PostsModule,
     LikesModule,
     CommentsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

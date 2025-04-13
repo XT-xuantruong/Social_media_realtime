@@ -9,7 +9,7 @@ import ReusableForm, {
   Input,
 } from "@/components/ReusableForm";
 import { Button } from "@/components/ui/button";
-import { useSendOtpMutation, useVerifyOtpMutation } from "@/services/AuthServices";
+import { useSendOtpMutation, useVerifyOtpMutation } from "@/services/rest_api/AuthServices";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 

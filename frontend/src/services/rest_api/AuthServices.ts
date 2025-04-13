@@ -43,7 +43,7 @@ export const authServices = baseRestApi.injectEndpoints({
           ).unwrap();
           dispatch(
             setUser({
-              user: meResult.data, 
+              user: meResult.data,
             })
           );
         } catch (error) {
@@ -152,7 +152,6 @@ export const authServices = baseRestApi.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(
             setUser({
-
               user: data.data.user,
             })
           );
@@ -180,7 +179,6 @@ export const authServices = baseRestApi.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(
             setUser({
-
               user: data.data.user,
             })
           );
