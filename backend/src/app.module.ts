@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MailerModule } from './mailer/mailer.module';
 import { UploadModule } from './upload/upload.module';
+import { FriendshipModule } from './friendship/friendship.module';
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
 import { CommentsModule } from './comments/comments.module';
@@ -39,6 +40,7 @@ import { ChatModule } from './chat/chat.module';
     UsersModule,
     MailerModule,
     UploadModule,
+    FriendshipModule,
     PostsModule,
     LikesModule,
     CommentsModule,

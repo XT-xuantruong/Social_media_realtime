@@ -9,7 +9,7 @@ import MessengerPage from '@/layouts/MessengerLayout';
 import ProfilePage from '@/pages/user/Profile';
 
 export const publicRoutes = [
-  { path: '/profile', component: ProfilePage, layout: AuthLayout },
+  { path: '/profile/:id', component: ProfilePage, layout: AuthLayout },
   { path: '/register', component: RegisterPage, layout: AuthLayout },
   { path: '/login', component: LoginPage, layout: AuthLayout },
   { path: '/otp', component: OtpFormPage, layout: AuthLayout },

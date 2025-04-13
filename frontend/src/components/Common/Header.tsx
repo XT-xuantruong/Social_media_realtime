@@ -10,8 +10,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import NotificationDropdown from "./NotificationDropdown";
+} from '@/components/ui/dropdown-menu';
+import NotificationDropdown from '../NotificationDropdown';
 
 export default function Header() {
   const navigate = useNavigate();

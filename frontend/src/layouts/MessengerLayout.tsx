@@ -1,5 +1,5 @@
 import { ReactNode, useState } from "react";
-import Header from "@/components/Header";
+import Header from "@/components/Common/Header";
 import SidebarUserChat from "@/components/SidebarUserChat";
 import MessengerPage from "@/pages/MessagerPage";
 import { Friend, Message } from "@/interfaces/types";
