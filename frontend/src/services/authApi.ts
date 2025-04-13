@@ -1,7 +1,7 @@
 import { RootState, store } from '@/stores';
 import { baseRestApi } from './baseRestApi';
 import { setCredentials, setUser } from '@/stores/authSlice';
-import { User, UserCredentials } from '@/interfaces/user';
+import { UserInfo, UserCredentials } from '@/interfaces/user';
 
 interface AuthResponse {
   data: {
@@ -87,7 +87,7 @@ export const authApi = baseRestApi.injectEndpoints({
         }
       },
     }),
-    getMe: builder.query<User, void>({
+    getMe: builder.query<UserInfo, void>({
       query: () => ({
         url: 'users/me',
         method: 'GET',

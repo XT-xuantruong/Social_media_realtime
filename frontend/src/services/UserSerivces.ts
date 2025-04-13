@@ -18,6 +18,16 @@ export const userServices = baseRestApi.injectEndpoints({
         message: response.message,
       }),
     }),
+    getById: builder.query<{ data: UserInfo; message: string }, string>({
+      query: (id='') => ({
+        url: `${entity}/${id}`,
+        method: 'GET',
+      }),
+      transformResponse: (response: ApiResponse<UserInfo>) => ({
+        data: response.data,
+        message: response.message,
+      }),
+    }),
     updateUser: builder.mutation<
       { data: UserInfo; message: string },
       { data: UpdateUserDto; file?: File }
@@ -52,8 +62,6 @@ export const userServices = baseRestApi.injectEndpoints({
 
           dispatch(
             setUser({
-              accessToken,
-              refreshToken,
               user: data.data, 
             })
           );
@@ -64,4 +72,4 @@ export const userServices = baseRestApi.injectEndpoints({
     }),
   }),
 });
-export const { useGetMeQuery, useUpdateUserMutation } = userServices;
+export const { useGetMeQuery, useUpdateUserMutation, useGetByIdQuery } = userServices;
