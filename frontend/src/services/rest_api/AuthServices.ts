@@ -43,9 +43,7 @@ export const authServices = baseRestApi.injectEndpoints({
           ).unwrap();
           dispatch(
             setUser({
-              accessToken: authData.data.accessToken,
-              refreshToken: authData.data.refreshToken,
-              user: meResult.data, 
+              user: meResult.data,
             })
           );
         } catch (error) {
@@ -73,8 +71,6 @@ export const authServices = baseRestApi.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(
             setUser({
-              accessToken: '',
-              refreshToken: '',
               user: data.data,
             })
           );
@@ -156,8 +152,6 @@ export const authServices = baseRestApi.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(
             setUser({
-              accessToken: data.data.accessToken,
-              refreshToken: data.data.refreshToken,
               user: data.data.user,
             })
           );
@@ -185,8 +179,6 @@ export const authServices = baseRestApi.injectEndpoints({
           const { data } = await queryFulfilled;
           dispatch(
             setUser({
-              accessToken: data.data.accessToken,
-              refreshToken: data.data.refreshToken,
               user: data.data.user,
             })
           );
