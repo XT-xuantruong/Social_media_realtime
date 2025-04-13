@@ -13,42 +13,45 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
-
-// Mock data for notifications
-const mockNotifications = [
-  { id: 1, message: "Nguyen Van A liked your post", time: "5 minutes ago", unread: true },
-  { id: 2, message: "Tran Thi B commented on your post", time: "1 hour ago", unread: true },
-  { id: 3, message: "You have a new friend request", time: "2 hours ago", unread: false },
-  { id: 4, message: "Le Van C shared your post", time: "3 hours ago", unread: true },
-  { id: 5, message: "Pham Thi D mentioned you", time: "4 hours ago", unread: false },
-  { id: 6, message: "Hoang Van E sent you a message", time: "5 hours ago", unread: true },
-  { id: 7, message: "Nguyen Thi F liked your photo", time: "6 hours ago", unread: false },
-  { id: 8, message: "Tran Van G added you to a group", time: "7 hours ago", unread: true },
-  { id: 9, message: "Le Thi H posted something new", time: "8 hours ago", unread: false },
-  { id: 10, message: "Pham Van I replied to your comment", time: "9 hours ago", unread: true },
-];
+import { useNotifications } from '@/hooks/useNotifications';
+import { useMarkNotificationAsReadMutation } from '@/services/graphql/notificationServicesGQL';
+import { formatDateWithTimeSince } from '@/utils/formatDateWithTimeSince';
 
 export default function NotificationDropdown() {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const { notifications, setNotifications } = useNotifications();
   const [visibleCount, setVisibleCount] = useState(4);
+  const [markAsRead] = useMarkNotificationAsReadMutation();
+
   const unreadCount = notifications.filter(({ unread }) => unread).length;
 
-  // Toggle read/unread status of a notification
-  const toggleReadStatus = (id: number) =>
+  const toggleReadStatus = async (id: string) => {
+    const isUnread = notifications.find((notif) => notif.id === id)?.unread;
+    if (!isUnread) return;
+
     setNotifications((prev) =>
       prev.map((notif) =>
-        notif.id === id ? { ...notif, unread: !notif.unread } : notif
-      )
+        notif.id === id ? { ...notif, unread: false } : notif,
+      ),
     );
 
-  // Mark a notification as read when clicked
-  const markAsRead = (id: number) => {
-    if (notifications.find((notif) => notif.id === id)?.unread) {
-      toggleReadStatus(id); // Only toggle if the notification is unread
+    try {
+      await markAsRead({ notificationId: id }).unwrap();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === id ? { ...notif, unread: true } : notif,
+        ),
+      );
     }
   };
 
-  // Toggle between showing 4 or all notifications
+  const markAsReadOnClick = (id: string) => {
+    if (notifications.find((notif) => notif.id === id)?.unread) {
+      toggleReadStatus(id);
+    }
+  };
+
   const toggleShowMore = (e: React.MouseEvent) => {
     e.stopPropagation();
     setVisibleCount((prev) => (prev === 4 ? notifications.length : 4));
@@ -58,7 +61,6 @@ export default function NotificationDropdown() {
 
   return (
     <DropdownMenu modal={false}>
-      {/* Trigger */}
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -78,13 +80,11 @@ export default function NotificationDropdown() {
         </Button>
       </DropdownMenuTrigger>
 
-      {/* Content */}
       <DropdownMenuContent
         className="w-80"
         align="end"
-        onCloseAutoFocus={(e) => e.preventDefault()} // Prevent closing when losing focus
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        {/* Header */}
         <DropdownMenuLabel className="flex justify-between items-center">
           <span>Notifications</span>
           {unreadCount > 0 && (
@@ -93,8 +93,7 @@ export default function NotificationDropdown() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        {/* Notifications List */}
-        <ScrollArea className={visibleCount <= 4 ? "max-h-[180px]" : "h-[360px]"}>
+        <ScrollArea className={visibleCount <= 4 ? 'max-h-[180px]' : 'h-[360px]'}>
           {visibleNotifications.length > 0 ? (
             visibleNotifications.map(({ id, message, time, unread }) => (
               <DropdownMenuItem
@@ -109,11 +108,18 @@ export default function NotificationDropdown() {
                   className="flex flex-col flex-1"
                   onClick={(e) => {
                     e.stopPropagation();
-                    markAsRead(id); 
+                    markAsReadOnClick(id);
                   }}
                 >
                   <span className="text-sm">{message}</span>
-                  <span className="text-xs text-gray-500">{time}</span>
+                  <span className="text-xs text-gray-500">
+                    {
+                      formatDateWithTimeSince(time, {
+                        formatType: 'relative',
+                        locale: 'vi',
+                      })
+                    }
+                  </span>
                 </Link>
                 <Checkbox
                   checked={!unread}
@@ -131,7 +137,6 @@ export default function NotificationDropdown() {
           )}
         </ScrollArea>
 
-        {/* Show More/Less Button */}
         {notifications.length > 4 && (
           <>
             <DropdownMenuSeparator />
@@ -140,7 +145,7 @@ export default function NotificationDropdown() {
               onClick={toggleShowMore}
               onSelect={(e) => e.preventDefault()}
             >
-              {visibleCount <= 4 ? "Show more" : "Show less"}
+              {visibleCount <= 4 ? 'Show more' : 'Show less'}
             </DropdownMenuItem>
           </>
         )}

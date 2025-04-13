@@ -26,6 +26,8 @@ export class NotificationsService {
     endCursor?: string;
     total: number;
   }> {
+    console.log('userId', userId);
+
     const queryOptions: any = {
       where: { user: { id: userId } },
       relations: ['user'],

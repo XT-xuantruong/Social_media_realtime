@@ -45,8 +45,8 @@ export const userServices = baseRestApi.injectEndpoints({
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled, getState }) {
         try {
-          const { data } = await queryFulfilled; 
-          const state = getState() as RootState; 
+          const { data } = await queryFulfilled;
+          const state = getState() as RootState;
           const accessToken = state.auth.token?.accessToken || '';
           const refreshToken = state.auth.token?.refreshToken || '';
 
@@ -54,7 +54,7 @@ export const userServices = baseRestApi.injectEndpoints({
             setUser({
               accessToken,
               refreshToken,
-              user: data.data, 
+              user: data.data,
             })
           );
         } catch (error) {
