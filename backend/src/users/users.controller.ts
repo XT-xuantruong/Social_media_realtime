@@ -7,10 +7,11 @@ import {
   UseGuards,
   UploadedFile,
   UseInterceptors,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UsersService } from './users.service';
-import { ResponseDto } from 'src/response.dto';
+import { ResponseDto } from 'src/dto/response.dto';
 import { User } from './user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
@@ -23,6 +24,22 @@ export class UsersController {
   @UseGuards(JwtAccessGuard)
   async getMe(@Req() req): Promise<ResponseDto<User>> {
     const user = await this.usersService.findById(req.user.userId);
+    const { password, ...userWithoutPassword } = user;
+    return new ResponseDto<User>(
+      'User retrieved successfully',
+      200,
+      userWithoutPassword,
+    );
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAccessGuard)
+  async getById(
+    @Param('id') id: string,
+    @Req() req,
+  ): Promise<ResponseDto<User>> {
+
+    const user = await this.usersService.findById(id);
     const { password, ...userWithoutPassword } = user;
     return new ResponseDto<User>(
       'User retrieved successfully',

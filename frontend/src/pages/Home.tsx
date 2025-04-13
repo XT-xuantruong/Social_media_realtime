@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import FormCreatePost from '@/components/FormCreatePost';
 import PostItem from '@/components/PostItem';
-import { useGetPostsQuery } from '@/services/postServicesGQL';
+import { useGetPostsQuery } from '@/services/graphql/postServicesGQL'
 import { Button } from "@/components/ui/button";
 
 

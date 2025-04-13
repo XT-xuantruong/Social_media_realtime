@@ -4,7 +4,7 @@ import { PostsListResponse, PostResponse } from './dto/postResponse.dto';
 import { LikesService } from 'src/likes/likes.service';
 import { UseGuards } from '@nestjs/common';
 import { User } from 'src/users/user.entity';
-import { CurrentUser } from 'src/current-user/current-user.decorator';
+import { CurrentUser } from 'src/auth/current-user.decorator';
 import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
 
 @Resolver()
@@ -63,25 +63,25 @@ export class PostsResolver {
   @UseGuards(JwtAccessGuard)
   async likePost(
     @Args('postId') postId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
   ): Promise<string> {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    return this.likesService.likePost(postId, user.id);
+    return this.likesService.likePost(postId, user.userId);
   }
 
   @Mutation(() => String)
   @UseGuards(JwtAccessGuard)
   async unlikePost(
     @Args('postId') postId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
   ): Promise<string> {
     if (!user) {
       throw new Error('User not authenticated');
     }
 
-    return this.likesService.unlikePost(postId, user.id);
+    return this.likesService.unlikePost(postId, user.userId);
   }
 }

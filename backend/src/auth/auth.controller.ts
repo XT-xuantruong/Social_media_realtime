@@ -2,8 +2,6 @@
 import {
   Body,
   Controller,
-  Delete,
-  Get,
   Post,
   Req,
   UseGuards,
@@ -13,9 +11,8 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { User } from 'src/users/user.entity';
-import { ResponseDto } from 'src/response.dto';
+import { ResponseDto } from 'src/dto/response.dto';
 import { LoginDto } from './dto/login.dto';
-import { GoogleAuthGuard } from './google-auth.guard';
 import { JwtRefreshGuard } from './jwt-refresh.guard';
 
 @Controller('api')

@@ -20,7 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ImageIcon, XIcon } from "lucide-react";
-import { useCreatePostMutation } from "@/services/postServices";
+import { useCreatePostMutation } from "@/services/rest_api/postServices";
 import { useToast } from "@/hooks/use-toast";
 import ReusableForm, { FormField, FormItem, FormControl, FormMessage } from "@/components/ReusableForm";
 

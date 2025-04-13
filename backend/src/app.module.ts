@@ -10,9 +10,12 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MailerModule } from './mailer/mailer.module';
 import { UploadModule } from './upload/upload.module';
+import { FriendshipModule } from './friendship/friendship.module';
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
 import { CommentsModule } from './comments/comments.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { JwtService } from '@nestjs/jwt';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -36,9 +39,11 @@ import { CommentsModule } from './comments/comments.module';
     UsersModule,
     MailerModule,
     UploadModule,
+    FriendshipModule,
     PostsModule,
     LikesModule,
     CommentsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

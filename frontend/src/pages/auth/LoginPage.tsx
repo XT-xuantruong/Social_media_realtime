@@ -12,7 +12,7 @@ import ReusableForm, {
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
-import { useLoginMutation, useLoginGoogleMutation } from "@/services/AuthServices";
+import { useLoginMutation, useLoginGoogleMutation } from "@/services/rest_api/AuthServices";
 import { Link, useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({

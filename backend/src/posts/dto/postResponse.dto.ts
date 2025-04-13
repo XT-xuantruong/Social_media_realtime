@@ -1,18 +1,6 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { Post } from '../posts.entity';
-
-// PageInfo cho cursor-based pagination
-@ObjectType()
-export class PageInfo {
-  @Field({ nullable: true })
-  endCursor?: string;
-
-  @Field()
-  hasNextPage: boolean;
-
-  @Field(() => Int)
-  total: number;
-}
+import { PageInfo } from 'src/dto/graphql.response.dto';
 
 // PostEdge cho danh sách bài đăng
 @ObjectType()
