@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { PostComment } from './comment';
+import { PageInfo } from './pageInfo';
 
 export interface Post {
   post_id: string;
@@ -21,12 +22,6 @@ export interface PostEdge {
   cursor: string;
   likeCount: number;
   commentCount: number;
-}
-
-export interface PageInfo {
-  endCursor?: string;
-  hasNextPage: boolean;
-  total: number;
 }
 
 export interface PaginatedResponse {

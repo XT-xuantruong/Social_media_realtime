@@ -17,9 +17,9 @@ export class ChatRoom {
   @Field(() => ID)
   room_id: string;
 
-  @Column({ type: 'tinyint', width: 1, default: 0 }) // Đổi thành TINYINT(1)
-  @Field(() => Boolean) // Vẫn expose là Boolean trong GraphQL
-  is_group: number; // Đổi thành number
+  @Column({ type: 'bool', default: false })
+  @Field(() => Boolean)
+  is_group: boolean;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   @Field({ nullable: true })

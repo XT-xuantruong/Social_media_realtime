@@ -10,6 +10,7 @@ import { ChatService } from './chat.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { SendMessageInput } from './dto/send-message.dto';
 import { JwtService } from '@nestjs/jwt';
+import { Message } from './messages.entity';
 
 @WebSocketGateway({
   cors: { origin: '*' },
@@ -25,7 +26,10 @@ export class ChatGateway {
     private readonly jwtService: JwtService,
   ) {}
 
-  // Xử lý khi client kết nối
+  afterInit() {
+    console.log('ChatGateway initialized');
+  }
+
   async handleConnection(@ConnectedSocket() client: Socket) {
     try {
       const token = client.handshake.auth.token?.replace('Bearer ', '');
@@ -37,25 +41,22 @@ export class ChatGateway {
         secret: process.env.JWT_SECRET_KEY,
       });
 
-      // Kiểm tra tokenType
       if (!payload.tokenType || payload.tokenType !== 'access') {
         throw new UnauthorizedException('Invalid token type');
       }
 
-      // Lưu userId vào socket để sử dụng sau này
       client.data = { userId: payload.sub };
       console.log(`Client connected: ${client.id} with userId: ${payload.sub}`);
     } catch (error) {
+      console.error('Connection error:', error.message);
       client.disconnect();
     }
   }
 
-  // Xử lý khi client ngắt kết nối
   handleDisconnect(@ConnectedSocket() client: Socket) {
     console.log(`Client disconnected: ${client.id}`);
   }
 
-  // Xử lý sự kiện gửi tin nhắn
   @SubscribeMessage('sendMessage')
   async handleSendMessage(
     @MessageBody() input: SendMessageInput,
@@ -64,15 +65,20 @@ export class ChatGateway {
     try {
       const userId = client.data.userId;
       const message = await this.chatService.sendMessage(input, userId);
-
-      // Phát tin nhắn đến tất cả client trong phòng
       this.server.to(input.room_id).emit('newMessage', message);
+      console.log(`Emitted newMessage to room ${input.room_id}:`, message);
     } catch (error) {
+      console.error('Error in handleSendMessage:', error.message);
       client.emit('error', { message: error.message });
     }
   }
 
-  // Tham gia phòng chat
+  // Thêm phương thức để resolver gọi và phát sự kiện newMessage
+  emitNewMessage(roomId: string, message: Message): void {
+    this.server.to(roomId).emit('newMessage', message);
+    console.log(`Emitted newMessage to room ${roomId} from resolver:`, message);
+  }
+
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
     @MessageBody() data: { room_id: string },
@@ -80,7 +86,6 @@ export class ChatGateway {
   ): Promise<void> {
     const userId = client.data.userId;
     try {
-      // Kiểm tra xem user có trong phòng không
       const room = await this.chatService.chatRoomRepository.findOne({
         where: { room_id: data.room_id },
         relations: ['roomUsers', 'roomUsers.user'],
@@ -96,19 +101,21 @@ export class ChatGateway {
       }
 
       client.join(data.room_id);
+      console.log(`Client ${client.id} joined room: ${data.room_id}`);
       client.emit('joinedRoom', { room_id: data.room_id });
     } catch (error) {
+      console.error('Error in handleJoinRoom:', error.message);
       client.emit('error', { message: error.message });
     }
   }
 
-  // Rời phòng chat
   @SubscribeMessage('leaveRoom')
   handleLeaveRoom(
     @MessageBody() data: { room_id: string },
     @ConnectedSocket() client: Socket,
   ): void {
     client.leave(data.room_id);
+    console.log(`Client ${client.id} left room: ${data.room_id}`);
     client.emit('leftRoom', { room_id: data.room_id });
   }
 }

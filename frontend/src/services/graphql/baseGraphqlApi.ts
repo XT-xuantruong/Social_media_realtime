@@ -79,6 +79,6 @@ const graphqlBaseQueryWithReauth: BaseQueryFn = async (
 export const baseGraphqlApi = createApi({
   reducerPath: 'graphqlApi',
   baseQuery: graphqlBaseQueryWithReauth,
-  tagTypes: ['Posts', 'Friends', 'FriendRequests'],
+  tagTypes: ['Posts', 'Friends', 'FriendRequests', 'ChatRooms', 'Messages'],
   endpoints: () => ({}),
 });
