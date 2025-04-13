@@ -13,7 +13,7 @@ import ReusableForm, {
 import { Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import { useRegisterMutation } from "@/services/AuthServices";
+import { useRegisterMutation } from "@/services/rest_api/AuthServices";
 
 
 

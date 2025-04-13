@@ -2,7 +2,7 @@ import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { CommentsService } from './comments.service';
 import { Comment } from './comments.entity';
 import { UseGuards } from '@nestjs/common';
-import { CurrentUser } from 'src/current-user/current-user.decorator';
+import { CurrentUser } from 'src/auth/current-user.decorator';
 import { User } from '../users/user.entity';
 import { JwtAccessGuard } from 'src/auth/jwt-access.guard';
 
@@ -24,7 +24,7 @@ export class CommentsResolver {
   }
 
   @Mutation(() => String)
-  @UseGuards(JwtAccessGuard) // Yêu cầu access token
+  @UseGuards(JwtAccessGuard)
   async deleteComment(
     @Args('commentId') commentId: string,
     @CurrentUser() user: any,

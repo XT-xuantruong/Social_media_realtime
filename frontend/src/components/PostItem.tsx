@@ -6,7 +6,12 @@ import { Heart, MessageCircle, X } from "lucide-react";
 import { Input } from "./ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useCreateCommentMutation, useDeleteCommentMutation, useLikePostMutation, useUnlikePostMutation } from "@/services/postServicesGQL";
+import { 
+  useCreateCommentMutation, 
+  useDeleteCommentMutation, 
+  useLikePostMutation, 
+  useUnlikePostMutation 
+} from "@/services/graphql/postServicesGQL";
 import { PostComment } from "@/interfaces/comment";
 
 interface PostItemProps {

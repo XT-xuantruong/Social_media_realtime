@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
-import Header from '@/components/Header';
+import Header from '@/components/Common/Header';
 // import Footer from "@/components/Footer";
-import SidebarLeft from '@/components/SidebarLeft';
-import SidebarRight from '@/components/SidebarRight';
+import SidebarLeft from '@/components/Common/SidebarLeft';
+import SidebarRight from '@/components/Common/SidebarRight';
 
 export default function MainSidebarLayout({
   children,
