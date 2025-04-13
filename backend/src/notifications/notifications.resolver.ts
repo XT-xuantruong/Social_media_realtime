@@ -15,16 +15,21 @@ export class NotificationsResolver {
   @Query(() => NotificationResponse)
   @UseGuards(JwtAccessGuard)
   async getNotifications(
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
     @Args('limit', { type: () => Int, nullable: true }) limit: number = 10,
     @Args('cursor', { type: () => String, nullable: true }) cursor?: string,
   ): Promise<NotificationResponse> {
     if (!user) {
       throw new Error('User not authenticated');
     }
+    console.log('user no', user);
 
     const { notifications, hasNextPage, endCursor, total } =
-      await this.notificationsService.getNotifications(user.id, limit, cursor);
+      await this.notificationsService.getNotifications(
+        user.userId,
+        limit,
+        cursor,
+      );
 
     return {
       message: 'Notifications retrieved successfully',

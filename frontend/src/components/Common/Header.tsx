@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import NotificationDropdown from './NotificationDropdown';
+import NotificationDropdown from '../NotificationDropdown';
 
 export default function Header() {
   return (
