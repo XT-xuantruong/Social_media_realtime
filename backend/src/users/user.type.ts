@@ -17,7 +17,19 @@ export class UserType {
 
   @Field()
   @Expose()
+  friendId: string;
+
+  @Field()
+  @Expose()
   email: string;
+
+  @Field({ nullable: true })
+  @Expose()
+  friend_status?: string;
+
+  @Field({ nullable: true })
+  @Expose()
+  friendshipId?: string;
 
   @Field({ nullable: true })
   @Expose()

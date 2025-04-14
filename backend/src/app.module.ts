@@ -16,6 +16,7 @@ import { LikesModule } from './likes/likes.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { JwtService } from '@nestjs/jwt';
+import { ChatModule } from './chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +31,7 @@ import { JwtService } from '@nestjs/jwt';
       database: process.env.DB_NAME,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
+      charset: 'utf8mb4',
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
@@ -44,6 +46,7 @@ import { JwtService } from '@nestjs/jwt';
     LikesModule,
     CommentsModule,
     NotificationsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppResolver],

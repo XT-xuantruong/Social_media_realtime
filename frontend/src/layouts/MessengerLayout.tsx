@@ -1,19 +1,18 @@
-import { ReactNode } from "react";
-import Header from "@/components/Header";
+import { ReactNode } from 'react';
+import Header from '@/components/Common/Header';
+import ChatSidebar from '@/components/chat/ChatSidebar';
 
-export default function MessengerLayout({ children }: { children: ReactNode }) {
+interface MessengerLayoutProps {
+  children: ReactNode;
+}
+
+export default function MessengerLayout({ children }: MessengerLayoutProps) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen">
       <Header />
       <div className="flex flex-1 pt-14">
-        <div className="w-80 bg-white p-4 border-r">
-          <h3 className="font-semibold mb-4">Tin nhắn</h3>
-          <ul className="space-y-2">
-            <li className="p-2 hover:bg-gray-100 rounded">Cuộc trò chuyện 1</li>
-            <li className="p-2 hover:bg-gray-100 rounded">Cuộc trò chuyện 2</li>
-          </ul>
-        </div>
-        <main className="flex-1 p-4">{children}</main>
+        <ChatSidebar />
+        <main className="flex-1 flex flex-col h-[calc(100vh-3.5rem)]">{children}</main>
       </div>
     </div>
   );

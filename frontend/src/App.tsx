@@ -1,13 +1,12 @@
-import { Route, Routes } from 'react-router-dom'
-import './App.css'
-import { publicRoutes } from './routes'
+import { Route, Routes } from 'react-router-dom';
+import { publicRoutes } from '@/routes';
+import { SocketProvider } from '@/contexts/SocketContext';
+import './App.css';
 
-function App() {
-
+export default function App() {
   return (
-    <div>
+    <SocketProvider>
       <Routes>
-        {/* Public Routes */}
         {publicRoutes.map(({ path, component: Component, layout: Layout }) => (
           <Route
             key={path}
@@ -24,8 +23,6 @@ function App() {
           />
         ))}
       </Routes>
-    </div>
-  )
+    </SocketProvider>
+  );
 }
-
-export default App

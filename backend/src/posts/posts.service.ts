@@ -1,11 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Like, Repository } from 'typeorm';
 import { UploadService } from 'src/upload/upload.service';
 import { User } from 'src/users/user.entity';
-import { Repository } from 'typeorm';
 import { CreatePostDto } from './dto/createPost.dto';
 import { Post } from './posts.entity';
 import { UpdatePostDto } from './dto/updatePost.dto';
+import { PostEdge } from './dto/postResponse.dto';
+import { PageInfo } from 'src/dto/graphql.response.dto';
 
 @Injectable()
 export class PostsService {
@@ -15,7 +17,7 @@ export class PostsService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private uploadService: UploadService,
-  ) {}
+  ) { }
 
   async findOne(post_id: string): Promise<{
     post: Post;
@@ -28,8 +30,8 @@ export class PostsService {
       relations: ['user', 'likes', 'comments', 'comments.user'],
     });
     const total = await this.postsRepository.count();
-    const likeCount = post.likes ? post.likes.length : 0; // Tính số lượng like
-    const commentCount = post.comments ? post.comments.length : 0; // Tính số lượng comment
+    const likeCount = post.likes ? post.likes.length : 0;
+    const commentCount = post.comments ? post.comments.length : 0;
     return { post, total, likeCount, commentCount };
   }
 
@@ -59,19 +61,13 @@ export class PostsService {
     }
 
     const posts = await query.getMany();
-
     const total = await this.postsRepository.count();
     const hasNextPage = posts.length > limit;
     const endCursor = hasNextPage
-      ? Buffer.from(posts[limit - 1].created_at.toISOString()).toString(
-          'base64',
-        )
+      ? Buffer.from(posts[limit - 1].created_at.toISOString()).toString('base64')
       : undefined;
 
-    // Tính số lượng like và comment cho từng bài đăng
-    const likeCounts = posts.map((post) =>
-      post.likes ? post.likes.length : 0,
-    );
+    const likeCounts = posts.map((post) => (post.likes ? post.likes.length : 0));
     const commentCounts = posts.map((post) =>
       post.comments ? post.comments.length : 0,
     );
@@ -86,6 +82,64 @@ export class PostsService {
     };
   }
 
+  async searchPosts(
+    query: string,
+    limit: number = 10,
+    cursor?: string,
+  ): Promise<{ edges: PostEdge[]; pageInfo: PageInfo }> {
+    try {
+      if (!query.trim()) {
+        throw new BadRequestException('Query không được rỗng');
+      }
+      if (limit <= 0) {
+        throw new BadRequestException('Limit phải lớn hơn 0');
+      }
+
+      const queryBuilder = this.postsRepository
+        .createQueryBuilder('post')
+        .leftJoinAndSelect('post.user', 'user')
+        .leftJoinAndSelect('post.likes', 'likes')
+        .leftJoinAndSelect('post.comments', 'comments')
+        .where('LOWER(post.content) LIKE LOWER(:query)', { query: `%${query}%` })
+        .orderBy('post.created_at', 'DESC')
+        .take(limit + 1);
+
+      if (cursor) {
+        try {
+          const cursorDate = new Date(Buffer.from(cursor, 'base64').toString('ascii'));
+          queryBuilder.andWhere('post.created_at < :cursor', { cursor: cursorDate });
+        } catch (error) {
+          throw new BadRequestException('Invalid cursor format');
+        }
+      }
+
+      const posts = await queryBuilder.getMany();
+      const total = await this.postsRepository.count({
+        where: { content: Like(`%${query}%`) }, // Sử dụng Like từ TypeORM
+      });
+
+      const hasNextPage = posts.length > limit;
+      const postsToReturn = posts.slice(0, limit);
+
+      const edges = postsToReturn.map((post) => ({
+        node: post,
+        cursor: Buffer.from(post.created_at.toISOString()).toString('base64'),
+        likeCount: post.likes ? post.likes.length : 0,
+        commentCount: post.comments ? post.comments.length : 0,
+      }));
+
+      return {
+        edges,
+        pageInfo: {
+          endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+          hasNextPage,
+          total,
+        },
+      };
+    } catch (error) {
+      throw new Error(`Không thể tìm kiếm bài đăng: ${error.message}`);
+    }
+  }
   async create(
     postData: CreatePostDto,
     files: Express.Multer.File[],
@@ -118,9 +172,7 @@ export class PostsService {
     postData: UpdatePostDto,
     files: Express.Multer.File[],
   ): Promise<Post> {
-    const post = await this.postsRepository.findOneBy({
-      post_id: postId,
-    });
+    const post = await this.postsRepository.findOneBy({ post_id: postId });
     if (!post) {
       throw new NotFoundException(
         'Post not found or you do not have permission to update it',
@@ -157,4 +209,8 @@ export class PostsService {
 
     await this.postsRepository.delete(postId);
   }
+}
+
+function TypeOrmLike(arg0: string): string | import("typeorm").FindOperator<string> {
+  throw new Error('Function not implemented.');
 }

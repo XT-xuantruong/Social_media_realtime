@@ -5,6 +5,9 @@ export interface UserInfo {
   avatar_url: string;
   bio: string;
   privacy: string;
+  friend_status: string;
+  friendshipId: string;
+  friendId: string;
   createdAt: string;
   updatedAt: string;
 }
