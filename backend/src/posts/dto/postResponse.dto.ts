@@ -10,7 +10,7 @@ export class PostEdge {
 
   @Field()
   cursor: string;
-
+      
   @Field(() => Int)
   likeCount: number;
 

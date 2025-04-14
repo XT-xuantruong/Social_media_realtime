@@ -1,3 +1,4 @@
+import { PaginatedResponse } from '@/interfaces/friend';
 import { UserInfo } from '@/interfaces/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
@@ -7,17 +8,25 @@ interface AuthState {
     refreshToken: string | null;
   } | null;
   user: UserInfo | null;
+  friends: PaginatedResponse<UserInfo>|null;
 }
 
 const initialState: AuthState = {
   token: null,
   user: null,
+  friends: null,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    setFriendOfUser:(
+      state,
+      action: PayloadAction<{friends: PaginatedResponse<UserInfo>}>
+    )=>{
+      state.friends=action.payload.friends
+    },
     setCredentials: (
       state,
       action: PayloadAction<{ accessToken: string; refreshToken: string }>
@@ -42,5 +51,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, setUser, logout } = authSlice.actions;
+export const { setCredentials, setUser, setFriendOfUser, logout } = authSlice.actions;
 export default authSlice.reducer;
