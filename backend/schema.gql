@@ -104,6 +104,24 @@ type AuthProvider {
   created_at: DateTime!
 }
 
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  total: Int!
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type UserResponse {
+  message: String!
+  status: Int!
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+}
+
 type UserType {
   id: ID!
   email: String!
@@ -139,12 +157,6 @@ type PaginatedUserResponse {
 
 type PaginatedFriendshipResponse {
   items: [Friendship!]
-  total: Int!
-}
-
-type PageInfo {
-  endCursor: String
-  hasNextPage: Boolean!
   total: Int!
 }
 
@@ -217,10 +229,12 @@ type PaginatedChatRoomsResponse {
 
 type Query {
   hello: String!
+  searchUsers(query: String!, limit: Int! = 10, cursor: String): UserResponse!
   getFriends(limit: Int, offset: Int, currentUserId: String!): PaginatedUserResponse!
   getFriendRequests(limit: Int, offset: Int, currentUserId: String!): PaginatedFriendshipResponse!
   getPost(postId: String!): PostResponse!
   getPosts(limit: Int!, cursor: String): PostsListResponse!
+  searchPosts(query: String!, limit: Int! = 10, cursor: String): PostsListResponse!
   getNotifications(limit: Int, cursor: String): NotificationResponse!
   getMessages(room_id: String!, limit: Int! = 20, cursor: String): MessagesListResponse!
   getChatRooms(limit: Int! = 10, cursor: String): PaginatedChatRoomsResponse!

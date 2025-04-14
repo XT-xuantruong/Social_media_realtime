@@ -42,7 +42,7 @@ export default function LoginPage() {
             title: "Login successful.",
             description: "Welcome back!",
           });
-          navigate("/home");
+          navigate("/");
         });
     } catch (err:any) {
       const errorMessage = err?.data?.message || "An unknown error occurred";

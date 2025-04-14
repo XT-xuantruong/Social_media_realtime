@@ -22,12 +22,9 @@ export default function ChatMessages({
   const currentUserId = useSelector((state: RootState) => state.auth.user?.id);
   const [displayedMessages, setDisplayedMessages] = useState<Message[]>([]);
 
-  // Cập nhật danh sách tin nhắn hiển thị: Chỉ lấy 10 tin nhắn mới nhất ban đầu
+  // Cập nhật danh sách tin nhắn hiển thị
   useEffect(() => {
-    if (messages.length > 0) {
-      const latestMessages = messages.slice(-10); // Lấy 10 tin nhắn mới nhất
-      setDisplayedMessages(latestMessages);
-    }
+    setDisplayedMessages(messages);
   }, [messages]);
 
   // Tự động cuộn xuống tin nhắn mới nhất khi có tin nhắn mới
@@ -43,13 +40,6 @@ export default function ChatMessages({
       const { scrollTop } = messagesContainerRef.current;
       if (scrollTop === 0 && !isFetchingMore) {
         onLoadMore();
-        // Tải thêm 10 tin nhắn cũ hơn từ messages
-        const currentLength = displayedMessages.length;
-        const remainingMessages = messages.slice(0, messages.length - currentLength);
-        if (remainingMessages.length > 0) {
-          const moreMessages = remainingMessages.slice(-10); // Lấy 10 tin nhắn cũ hơn
-          setDisplayedMessages((prev) => [...moreMessages, ...prev]);
-        }
       }
     }
   };
@@ -67,7 +57,7 @@ export default function ChatMessages({
       <div className="flex flex-col gap-3">
         {displayedMessages.map((message) => {
           const isCurrentUser = message.sender.id === currentUserId;
-          const displayName = message.sender.full_name || 'Unknown'; // Lấy tên người gửi
+          const displayName = message.sender.full_name || "Unknown";
 
           return (
             <div
@@ -77,9 +67,9 @@ export default function ChatMessages({
               <div className="flex items-start gap-2">
                 {/* Hiển thị avatar bên trái cho người nhận */}
                 {!isCurrentUser && (
-                  <Avatar className="h-10 w-10 mr-3">
+                  <Avatar className="h-8 w-8 mr-2 self-end">
                     <AvatarImage
-                      src={message.sender.avatar_url || 'https://via.placeholder.com/40'} // URL avatar hoặc placeholder
+                      src={message.sender.avatar_url || 'https://via.placeholder.com/40'}
                       alt={displayName}
                     />
                     <AvatarFallback>{displayName[0]}</AvatarFallback>
@@ -102,9 +92,9 @@ export default function ChatMessages({
                 </div>
                 {/* Hiển thị avatar bên phải cho người gửi */}
                 {isCurrentUser && (
-                  <Avatar className="h-10 w-10 ml-3">
+                  <Avatar className="h-8 w-8 ml-2 self-end">
                     <AvatarImage
-                      src={message.sender.avatar_url || 'https://via.placeholder.com/40'} // URL avatar hoặc placeholder
+                      src={message.sender.avatar_url || 'https://via.placeholder.com/40'}
                       alt={displayName}
                     />
                     <AvatarFallback>{displayName[0]}</AvatarFallback>
