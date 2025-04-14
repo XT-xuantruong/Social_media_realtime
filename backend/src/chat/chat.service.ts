@@ -139,7 +139,7 @@ export class ChatService {
 
     const sender = await this.usersService.findById(senderId);
 
-    if (!input.content.trim()) {
+    if (!input.content.trim() && input.content !== '') {
       throw new BadRequestException('Message content cannot be empty');
     }
 
