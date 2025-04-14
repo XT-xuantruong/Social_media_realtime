@@ -6,6 +6,7 @@ import { User } from 'src/users/user.entity';
 import { PaginatedUserResponse, PaginatedFriendshipResponse } from './dto/paginated-response.dto';
 import { UserType } from 'src/users/user.type';
 import { classToPlain, plainToClass } from 'class-transformer';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class FriendshipService {
@@ -14,33 +15,41 @@ export class FriendshipService {
     private friendshipRepository: Repository<Friendship>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private notificationsService: NotificationsService,
+
   ) {}
 
   async getFriends(limit: number, offset: number, currentUserId: string): Promise<PaginatedUserResponse> {
     const [items, total] = await this.friendshipRepository.findAndCount({
-      where: { user: { id: currentUserId }, status: 'accepted' },
+      where: [{user: { id: currentUserId }}, { friend :{id: currentUserId}}],
       take: limit,
       skip: offset,
-      relations: ['friend'],
+      relations: ['user', 'friend'],
     });
     console.log(items);
     
 
-// Chuyển đổi User instance thành plain object
-const plainFriends = items.map((f) => classToPlain(f.friend));
+    const plainFriends = items.map((f) => {
+      const plainFriend = classToPlain(f.friend);
+      return {
+        ...plainFriend,
+        friend_status: f.status, 
+        friendshipId: f.friendshipId,
+        friendId: f.user.id
+      };
+    });
 
-// Ánh xạ từ plain object sang UserType
-const mappedItems = plainToClass(
-  UserType,
-  plainFriends,
-  { excludeExtraneousValues: true },
-);
+  const mappedItems = plainToClass(
+    UserType,
+    plainFriends,
+    { excludeExtraneousValues: true },
+  );
 
-    return {
-      items: mappedItems,
-      total,
-    };
-  }
+      return {
+        items: mappedItems,
+        total,
+      };
+    }
 
   async getFriendRequests(limit: number, offset: number, currentUserId: string): Promise<PaginatedFriendshipResponse> {
     const [items, total] = await this.friendshipRepository.findAndCount({
@@ -57,28 +66,6 @@ const mappedItems = plainToClass(
     const currentUser = await this.userRepository.findOne({ where: { id: currentUserId } });
     const friend = await this.userRepository.findOne({ where: { id: friendId } });
 
-    if (!currentUser) {
-      throw new NotFoundException('Current user not found');
-    }
-    if (!friend) {
-      throw new NotFoundException('Friend not found');
-    }
-
-    const existingFriendship = await this.friendshipRepository.findOne({
-      where: [
-        { user: { id: currentUserId }, friend: { id: friendId } },
-        { user: { id: friendId }, friend: { id: currentUserId } },
-      ],
-    });
-
-    if (existingFriendship) {
-      throw new BadRequestException('A friendship request already exists between these users');
-    }
-
-    if (currentUserId === friendId) {
-      throw new BadRequestException('You cannot send a friend request to yourself');
-    }
-
     const friendship = this.friendshipRepository.create({
       user: currentUser,
       friend: friend,
@@ -86,6 +73,8 @@ const mappedItems = plainToClass(
       createdAt: new Date().toISOString(),
     });
 
+    await this.notificationsService.createNotification(currentUserId,  'friend_request', friendId);
+    
     return this.friendshipRepository.save(friendship);
   }
 
@@ -142,7 +131,6 @@ const mappedItems = plainToClass(
       throw new NotFoundException('Friendship not found');
     }
 
-    // Kiểm tra xem người dùng hiện tại có phải là một trong hai bên của mối quan hệ không
     if (friendship.user.id !== currentUserId && friendship.friend.id !== currentUserId) {
       throw new UnauthorizedException('You are not authorized to remove this friendship');
     }

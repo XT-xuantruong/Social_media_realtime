@@ -34,6 +34,14 @@ import {
   useGetByIdQuery,
   useUpdateUserMutation,
 } from '@/services/rest_api/UserSerivces';
+import {
+  useGetFriendsQuery,
+  useGetFriendRequestsQuery,
+  useSendFriendRequestMutation,
+  useAcceptFriendRequestMutation,
+  useRejectFriendRequestMutation,
+  useUnfriendMutation,
+} from '@/services/graphql/friendServicesGQL';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -46,6 +54,8 @@ import {
   Users,
   SendHorizontal,
 } from 'lucide-react';
+import { FriendRequest, PaginatedResponse } from '@/interfaces/friend';
+import { UserInfo } from '@/interfaces/user';
 
 type PrivacyType = 'public' | 'private' | 'friends';
 
@@ -63,31 +73,148 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-const invoices = [
-  {
-    id: 'INV001',
-    full_name: 'Paid',
-    avatar_url:
-      'https://thanhnien.mediacdn.vn/Uploaded/tuyenth/2022_09_16/1-1667.jpg',
-  },
-];
-
 export default function ProfilePage() {
   const { toast } = useToast();
+  const { id } = useParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | undefined>(undefined);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [friendStatus, setFriendStatus] = useState<'add' | 'sent' | 'friend'>(
-    'sent'
+    'add'
   );
-  const { id } = useParams();
+
+  const [friends, setFriend] = useState<PaginatedResponse<UserInfo> | null>(
+    null
+  );
+  const [friendRequests, setFriendRequests] = useState<PaginatedResponse<
+    FriendRequest<UserInfo>
+  > | null>(null);
 
   const me = useSelector((state: RootState) => state.auth.user);
+  const friendOfMe = useSelector((state: RootState) => state.auth.friends);
+  console.log(friendOfMe);
 
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const { data: userByID, isLoading: isFetchingUser } = useGetByIdQuery(
     id as string
   );
+
+  const { data: friendsData, refetch: refetchFriends } = useGetFriendsQuery(
+    { limit: 10, offset: 0, currentUserId: id || '' },
+    { skip: !id || !userByID?.data?.id }
+  );
+
+  const { data: friendRequestsData, refetch: refetchFriendRequests } =
+    useGetFriendRequestsQuery(
+      { limit: 10, offset: 0, currentUserId: id || '' },
+      { skip: !id || !me?.id }
+    );
+
+  const [acceptFriendRequest] = useAcceptFriendRequestMutation();
+  const [rejectFriendRequest] = useRejectFriendRequestMutation();
+  const [sendFriendRequest] = useSendFriendRequestMutation();
+  const [removeFriend] = useUnfriendMutation();
+
+  const handleAccept = async (friendId: string) => {
+    await acceptFriendRequest({
+      friendshipId: friendId,
+      currentUserId: id as string,
+    })
+      .unwrap()
+      .then(async () => {
+        toast({
+          title: 'Friend Request Accepted',
+          description: `You have accepted the friend request`,
+        });
+        await refetchFriendRequests();
+        await refetchFriends();
+      });
+  };
+
+  const handlereject = async (friendId: string) => {
+    await rejectFriendRequest({
+      friendshipId: friendId,
+      currentUserId: id as string,
+    })
+      .unwrap()
+      .then(async () => {
+        toast({
+          title: 'Friend Request Rejectted',
+          description: `You have rejected the friend request`,
+        });
+        await refetchFriendRequests();
+      });
+  };
+
+  const handleremove = async (friendId: string) => {
+    await removeFriend({
+      friendshipId: friendId,
+      currentUserId: id as string,
+    })
+      .unwrap()
+      .then(async () => {
+        toast({
+          title: 'Unfriended Successfully',
+          description: 'This user has been removed from your friends list.',
+        });
+        await refetchFriends();
+      });
+  };
+
+  const hadlesend = async (id: string) => {
+    await sendFriendRequest({
+      friendId: id,
+      currentUserId: me?.id as string,
+    })
+      .unwrap()
+      .then(async () => {
+        toast({
+          title: 'Friend Request Sent',
+          description: 'Your friend request has been successfully sent.',
+        });
+        setFriendStatus('sent');
+      });
+  };
+
+  const isCheck = (idCheck: string, status: string) => {
+    console.log('code1', friendOfMe);
+    console.log('code2', friendsData);
+    return friendOfMe?.items.some((item) => {
+      if (item.id !== me?.id) {
+        console.log('code3', idCheck);
+
+        return item.id === idCheck && item.friend_status === status;
+      }
+      return false;
+    });
+  };
+
+  useEffect(() => {
+    friendOfMe?.items.forEach((item) => {
+      if (item.id === id || item.friendId === id) {
+        if (item.friend_status === 'pending') {
+          setFriendStatus('sent');
+        }
+        if (item.friend_status === 'accepted') {
+          setFriendStatus('friend');
+        }
+      }
+    });
+  }, [friendsData, userByID]);
+
+  useEffect(() => {
+    if (friendRequestsData) {
+      setFriendRequests(friendRequestsData);
+    }
+
+    if (friendsData) {
+      const filteredFriends = friendsData.items.filter(
+        (friend: UserInfo) => friend.friend_status == 'accepted'
+      );
+
+      setFriend({ ...friendsData, items: filteredFriends });
+    }
+  }, [friendsData, friendRequestsData]);
 
   useEffect(() => {
     if (userByID) {
@@ -105,13 +232,6 @@ export default function ProfilePage() {
       setAvatarPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
-  };
-
-  const handleUnfriend = () => {
-    toast({
-      title: 'Unfriend',
-      description: 'You unfriend successfully',
-    });
   };
 
   const onSubmit = async (formData: ProfileFormValues) => {
@@ -153,7 +273,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="w-full max-w-lg p-8 bg-white border rounded-lg shadow-lg">
+    <div className="w-full max-w-xl p-8 bg-white border rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Profile
       </h2>
@@ -200,7 +320,7 @@ export default function ProfilePage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setFriendStatus('sent');
+                  hadlesend(id as string);
                 }}
               >
                 <UserRoundPlus />
@@ -321,75 +441,95 @@ export default function ProfilePage() {
         <TabsContent value="friend">
           <Table>
             <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell className="font-medium">
-                    <Avatar className="w-20 h-20 rounded-md">
-                      <AvatarImage src={invoice.avatar_url} />
-                      <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell>{invoice.full_name}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="space-x-2">
-                      {userByID.data.id !== me?.id ? (
-                        <>
-                          {friendStatus === 'friend' ? (
-                            <Button variant="outline" disabled>
-                              <Users />
-                              Friend
-                            </Button>
-                          ) : friendStatus === 'sent' ? (
-                            <Button variant="outline" disabled>
-                              <SendHorizontal />
-                              Sent
-                            </Button>
+              {friends?.items.map(
+                (friend) =>
+                  friend.id !== me?.id && (
+                    <TableRow key={friend.id}>
+                      <TableCell className="font-medium">
+                        <Avatar className="w-20 h-20 rounded-md">
+                          <AvatarImage src={friend.avatar_url} />
+                          <AvatarFallback>
+                            {friend.full_name?.[0] || 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>{friend.full_name}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="space-x-2">
+                          {userByID.data.id !== me?.id ? (
+                            <>
+                              {isCheck(
+                                friend.id === id ? friend.friendId : friend.id,
+                                'accepted'
+                              ) ? (
+                                <Button variant="outline" disabled>
+                                  <Users />
+                                  Friend
+                                </Button>
+                              ) : isCheck(
+                                  friend.id === id
+                                    ? friend.friendId
+                                    : friend.id,
+                                  'pending'
+                                ) ? (
+                                <Button variant="outline" disabled>
+                                  <SendHorizontal />
+                                  Sent
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    hadlesend(friend.id);
+                                  }}
+                                >
+                                  <UserRoundPlus />
+                                  Add friend
+                                </Button>
+                              )}
+                            </>
                           ) : (
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setFriendStatus('sent');
-                              }}
-                            >
-                              <UserRoundPlus />
-                              Add friend
-                            </Button>
+                            <>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="outline">
+                                    <UserRoundX />
+                                    Unfriend
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Are you sure you want to remove this
+                                      friend?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. You and this
+                                      user will no longer be connected as
+                                      friends.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>
+                                      Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() =>
+                                        handleremove(friend.friendshipId)
+                                      }
+                                    >
+                                      Continue
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
                           )}
-                        </>
-                      ) : (
-                        <>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline">
-                                <UserRoundX />
-                                Unfriend
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  Are you absolutely sure?
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. This will
-                                  permanently delete your account and remove
-                                  your data from our servers.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleUnfriend}>
-                                  Continue
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+              )}
             </TableBody>
           </Table>
         </TabsContent>
@@ -398,18 +538,23 @@ export default function ProfilePage() {
             <TabsContent value="friend_request">
               <Table>
                 <TableBody>
-                  {invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
+                  {friendRequests?.items.map((friendRequest) => (
+                    <TableRow key={friendRequest.user.id}>
                       <TableCell className="font-medium">
                         <Avatar className="w-20 h-20 rounded-md">
-                          <AvatarImage src={invoice.avatar_url} />
+                          <AvatarImage src={friendRequest.user.avatar_url} />
                           <AvatarFallback>CN</AvatarFallback>
                         </Avatar>
                       </TableCell>
-                      <TableCell>{invoice.full_name}</TableCell>
+                      <TableCell>{friendRequest.user.full_name}</TableCell>
                       <TableCell className="text-right">
                         <div className="space-x-2">
-                          <Button variant="outline">
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              handleAccept(friendRequest.friendshipId)
+                            }
+                          >
                             <Check />
                             Accept
                           </Button>
@@ -423,17 +568,21 @@ export default function ProfilePage() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  Are you absolutely sure?
+                                  Are you sure you want to reject this friend
+                                  request?
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will
-                                  permanently delete your account and remove
-                                  your data from our servers.
+                                  This action cannot be undone. The user will
+                                  not be added to your friend list.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleUnfriend}>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handlereject(friendRequest.friendshipId)
+                                  }
+                                >
                                   Continue
                                 </AlertDialogAction>
                               </AlertDialogFooter>
