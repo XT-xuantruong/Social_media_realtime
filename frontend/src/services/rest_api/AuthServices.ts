@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseRestApi } from './baseRestApi';
-import { setCredentials, setUser } from '@/stores/authSlice';
+import { setCredentials, setFriendOfUser, setUser } from '@/stores/authSlice';
 import { RootState, store } from '@/stores';
 import { UserCredentials, UserInfo } from '@/interfaces/user';
 import { ApiResponse } from '@/interfaces/apiResponse';
 import { userServices } from './UserSerivces';
+import { friendServicesGQL } from '../graphql/friendServicesGQL';
+import { PaginatedResponse } from '@/interfaces/friend';
 interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -41,11 +43,20 @@ export const authServices = baseRestApi.injectEndpoints({
           const meResult = await dispatch(
             userServices.endpoints.getMe.initiate(undefined)
           ).unwrap();
+
+          const friends= await dispatch(
+            friendServicesGQL.endpoints.getFriends.initiate( { limit: 100, offset: 0, currentUserId: meResult.data.id || '' },)
+          )
           dispatch(
             setUser({
               user: meResult.data,
-            })
+            }),
           );
+          dispatch(
+            setFriendOfUser({
+              friends: friends?.data as PaginatedResponse<UserInfo>
+            })
+          )
         } catch (error) {
           console.error('Login failed:', error);
         }
