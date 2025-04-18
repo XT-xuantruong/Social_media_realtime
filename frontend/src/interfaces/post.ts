@@ -8,6 +8,7 @@ export interface Post {
   user: { id: string; full_name: string; avatar_url?: string };
   content: string;
   media_url?: string[];
+  isLike: boolean;
   created_at: string;
   updated_at?: string;
   visibility: 'public' | 'friends' | 'private';

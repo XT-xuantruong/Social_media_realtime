@@ -46,6 +46,7 @@ export const postServicesGQL = baseGraphqlApi.injectEndpoints({
                   created_at
                   updated_at
                   visibility
+                  isLike
                   user {
                     id
                     full_name

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useInView } from "react-intersection-observer"; // 👈 import thư viện
 import { useGetPostsQuery } from "@/services/graphql/postServicesGQL";
 import FormCreatePost from "@/components/post/FormCreatePost";
-import PostItem from "@/components/PostItem";
+import PostItem from "@/components/post/PostItem";
 
 const Home = () => {
   const [limit] = useState(5);

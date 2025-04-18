@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '@/stores';
@@ -16,7 +17,7 @@ export default function MessengerPage() {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  const { data, isLoading, error, refetch } = useGetMessagesQuery(
+  const { data, isLoading, error } = useGetMessagesQuery(
     {
       roomId: selectedRoom?.room_id || '',
       limit: 20,

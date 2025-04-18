@@ -10,7 +10,7 @@ import { User } from 'src/users/user.entity';
 import { CreatePostDto } from './dto/createPost.dto';
 import { Post } from './posts.entity';
 import { UpdatePostDto } from './dto/updatePost.dto';
-import { PostEdge } from './dto/postResponse.dto';
+import { PostCustom, PostEdge } from './dto/postResponse.dto';
 import { PageInfo } from 'src/dto/graphql.response.dto';
 
 @Injectable()
@@ -42,34 +42,35 @@ export class PostsService {
   async findPosts(
     limit: number,
     cursor?: string,
+    currentUserId?: string,
   ): Promise<{
-    posts: Post[];
+    posts: PostCustom[];
     hasNextPage: boolean;
     endCursor?: string;
     total: number;
     likeCounts: number[];
     commentCounts: number[];
   }> {
-    const realLimit = limit + 1; // Lấy thêm 1 để kiểm tra còn trang sau không
+    const realLimit = limit + 1;
 
     const query = this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
       .leftJoinAndSelect('post.likes', 'likes')
+      .leftJoinAndSelect('likes.user', 'likeUser')
       .leftJoinAndSelect('post.comments', 'comments')
       .leftJoinAndSelect('comments.user', 'commentUser')
-      .where('post.visibility = :visibility', { visibility: 'public' });
+      .where('post.visibility IN (:...visibility)', {
+        visibility: ['public', 'friends'],
+      });
 
-    // Xử lý cursor
     if (cursor) {
       try {
         const decoded = Buffer.from(cursor, 'base64').toString('ascii');
         const [createdAtStr, postIdStr] = decoded.split('|');
         const createdAt = new Date(createdAtStr);
 
-        if (isNaN(createdAt.getTime())) {
-          throw new Error();
-        }
+        if (isNaN(createdAt.getTime())) throw new Error();
 
         query.andWhere(
           '(post.created_at < :createdAt OR (post.created_at = :createdAt AND post.post_id < :postIdStr))',
@@ -80,18 +81,21 @@ export class PostsService {
       }
     }
 
-    // Sắp xếp theo thời gian giảm dần
     query
       .orderBy('post.created_at', 'DESC')
       .addOrderBy('post.post_id', 'DESC')
       .take(realLimit);
 
     const fetchedPosts = await query.getMany();
-
     const hasNextPage = fetchedPosts.length === realLimit;
     const posts = hasNextPage ? fetchedPosts.slice(0, limit) : fetchedPosts;
 
-    // Tạo cursor mới nếu có trang tiếp theo
+    const postsWithIsLike = posts.map((post) => {
+      const isLike =
+        post.likes?.some((like) => like.user?.id === currentUserId) ?? false;
+      return { ...post, isLike };
+    });
+
     const endCursor = hasNextPage
       ? Buffer.from(
           `${posts[posts.length - 1].created_at.toISOString()}|${posts[posts.length - 1].post_id}`,
@@ -106,7 +110,7 @@ export class PostsService {
     });
 
     return {
-      posts,
+      posts: postsWithIsLike,
       hasNextPage,
       endCursor,
       total,
@@ -115,70 +119,70 @@ export class PostsService {
     };
   }
 
-  async searchPosts(
-    query: string,
-    limit: number = 10,
-    cursor?: string,
-  ): Promise<{ edges: PostEdge[]; pageInfo: PageInfo }> {
-    try {
-      if (!query.trim()) {
-        throw new BadRequestException('Query không được rỗng');
-      }
-      if (limit <= 0) {
-        throw new BadRequestException('Limit phải lớn hơn 0');
-      }
+  // async searchPosts(
+  //   query: string,
+  //   limit: number = 10,
+  //   cursor?: string,
+  // ): Promise<{ edges: PostEdge[]; pageInfo: PageInfo }> {
+  //   try {
+  //     if (!query.trim()) {
+  //       throw new BadRequestException('Query không được rỗng');
+  //     }
+  //     if (limit <= 0) {
+  //       throw new BadRequestException('Limit phải lớn hơn 0');
+  //     }
 
-      const queryBuilder = this.postsRepository
-        .createQueryBuilder('post')
-        .leftJoinAndSelect('post.user', 'user')
-        .leftJoinAndSelect('post.likes', 'likes')
-        .leftJoinAndSelect('post.comments', 'comments')
-        .where('LOWER(post.content) LIKE LOWER(:query)', {
-          query: `%${query}%`,
-        })
-        .orderBy('post.created_at', 'DESC')
-        .take(limit + 1);
+  //     const queryBuilder = this.postsRepository
+  //       .createQueryBuilder('post')
+  //       .leftJoinAndSelect('post.user', 'user')
+  //       .leftJoinAndSelect('post.likes', 'likes')
+  //       .leftJoinAndSelect('post.comments', 'comments')
+  //       .where('LOWER(post.content) LIKE LOWER(:query)', {
+  //         query: `%${query}%`,
+  //       })
+  //       .orderBy('post.created_at', 'DESC')
+  //       .take(limit + 1);
 
-      if (cursor) {
-        try {
-          const cursorDate = new Date(
-            Buffer.from(cursor, 'base64').toString('ascii'),
-          );
-          queryBuilder.andWhere('post.created_at < :cursor', {
-            cursor: cursorDate,
-          });
-        } catch (error) {
-          throw new BadRequestException('Invalid cursor format');
-        }
-      }
+  //     if (cursor) {
+  //       try {
+  //         const cursorDate = new Date(
+  //           Buffer.from(cursor, 'base64').toString('ascii'),
+  //         );
+  //         queryBuilder.andWhere('post.created_at < :cursor', {
+  //           cursor: cursorDate,
+  //         });
+  //       } catch (error) {
+  //         throw new BadRequestException('Invalid cursor format');
+  //       }
+  //     }
 
-      const posts = await queryBuilder.getMany();
-      const total = await this.postsRepository.count({
-        where: { content: Like(`%${query}%`) }, // Sử dụng Like từ TypeORM
-      });
+  //     const posts = await queryBuilder.getMany();
+  //     const total = await this.postsRepository.count({
+  //       where: { content: Like(`%${query}%`) }, // Sử dụng Like từ TypeORM
+  //     });
 
-      const hasNextPage = posts.length > limit;
-      const postsToReturn = posts.slice(0, limit);
+  //     const hasNextPage = posts.length > limit;
+  //     const postsToReturn = posts.slice(0, limit);
 
-      const edges = postsToReturn.map((post) => ({
-        node: post,
-        cursor: Buffer.from(post.created_at.toISOString()).toString('base64'),
-        likeCount: post.likes ? post.likes.length : 0,
-        commentCount: post.comments ? post.comments.length : 0,
-      }));
+  //     const edges = postsToReturn.map((post) => ({
+  //       node: post,
+  //       cursor: Buffer.from(post.created_at.toISOString()).toString('base64'),
+  //       likeCount: post.likes ? post.likes.length : 0,
+  //       commentCount: post.comments ? post.comments.length : 0,
+  //     }));
 
-      return {
-        edges,
-        pageInfo: {
-          endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
-          hasNextPage,
-          total,
-        },
-      };
-    } catch (error) {
-      throw new Error(`Không thể tìm kiếm bài đăng: ${error.message}`);
-    }
-  }
+  //     return {
+  //       edges,
+  //       pageInfo: {
+  //         endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+  //         hasNextPage,
+  //         total,
+  //       },
+  //     };
+  //   } catch (error) {
+  //     throw new Error(`Không thể tìm kiếm bài đăng: ${error.message}`);
+  //   }
+  // }
   async create(
     postData: CreatePostDto,
     files: Express.Multer.File[],
