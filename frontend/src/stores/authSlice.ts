@@ -27,6 +27,19 @@ const authSlice = createSlice({
     ) => {
       state.friends = action.payload.friends;
     },
+    setAuth: (
+      state,
+      action: PayloadAction<{
+        user: object;
+        token: { accessToken: string; refreshToken: string };
+      }>
+    ) => {
+      state.user = action.payload.user as AuthState['user'];
+      state.token = {
+        accessToken: action.payload.token.accessToken,
+        refreshToken: action.payload.token.refreshToken,
+      };
+    },
     setCredentials: (
       state,
       action: PayloadAction<{ accessToken: string; refreshToken: string }>
@@ -52,6 +65,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, setUser, setFriendOfUser, logout } =
+export const { setAuth, setCredentials, setUser, setFriendOfUser, logout } =
   authSlice.actions;
 export default authSlice.reducer;

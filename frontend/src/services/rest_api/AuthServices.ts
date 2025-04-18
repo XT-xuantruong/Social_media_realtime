@@ -35,7 +35,7 @@ export const authServices = baseRestApi.injectEndpoints({
           console.log('Login response:', authData);
 
           dispatch(
-            setCredentials({ 
+            setCredentials({
               accessToken: authData.data.accessToken,
               refreshToken: authData.data.refreshToken,
             } as { accessToken: string; refreshToken: string })
@@ -44,19 +44,23 @@ export const authServices = baseRestApi.injectEndpoints({
             userServices.endpoints.getMe.initiate(undefined)
           ).unwrap();
 
-          const friends= await dispatch(
-            friendServicesGQL.endpoints.getFriends.initiate( { limit: 100, offset: 0, currentUserId: meResult.data.id || '' },)
-          )
+          const friends = await dispatch(
+            friendServicesGQL.endpoints.getFriends.initiate({
+              limit: 100,
+              offset: 0,
+              currentUserId: meResult.data.id || '',
+            })
+          );
           dispatch(
             setUser({
               user: meResult.data,
-            }),
+            })
           );
           dispatch(
             setFriendOfUser({
-              friends: friends?.data as PaginatedResponse<UserInfo>
+              friends: friends?.data as PaginatedResponse<UserInfo>,
             })
-          )
+          );
         } catch (error) {
           console.error('Login failed:', error);
         }
@@ -189,8 +193,17 @@ export const authServices = baseRestApi.injectEndpoints({
         try {
           const { data } = await queryFulfilled;
           dispatch(
+            setCredentials({
+              accessToken: data.data.accessToken,
+              refreshToken: data.data.refreshToken,
+            })
+          );
+          const meResult = await dispatch(
+            userServices.endpoints.getMe.initiate(undefined)
+          ).unwrap();
+          dispatch(
             setUser({
-              user: data.data.user,
+              user: meResult.data,
             })
           );
         } catch (error) {
