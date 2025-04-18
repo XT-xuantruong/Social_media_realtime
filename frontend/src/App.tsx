@@ -1,12 +1,21 @@
-import { Route, Routes } from 'react-router-dom';
-import { publicRoutes } from '@/routes';
-import { SocketProvider } from '@/contexts/SocketContext';
+import { Route, Routes, Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/stores';
+import { publicRoutes, privateRoutes } from '@/routes';
 import './App.css';
+
+// Component để bảo vệ private routes
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const accessToken = useSelector((state: RootState) => state.auth.token?.accessToken);
+  const isAuthenticated = !!accessToken;
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+};
 
 export default function App() {
   return (
-    <SocketProvider>
+    <>
       <Routes>
+        {/* Public Routes */}
         {publicRoutes.map(({ path, component: Component, layout: Layout }) => (
           <Route
             key={path}
@@ -22,7 +31,29 @@ export default function App() {
             }
           />
         ))}
+
+        {/* Private Routes */}
+        {privateRoutes.map(({ path, component: Component, layout: Layout }) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <ProtectedRoute>
+                {Layout ? (
+                  <Layout>
+                    <Component />
+                  </Layout>
+                ) : (
+                  <Component />
+                )}
+              </ProtectedRoute>
+            }
+          />
+        ))}
+
+        {/* Route 404 (tùy chọn) */}
+        <Route path="*" element={<div>404 - Page Not Found</div>} />
       </Routes>
-    </SocketProvider>
+    </>
   );
 }

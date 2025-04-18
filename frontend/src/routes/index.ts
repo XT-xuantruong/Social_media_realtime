@@ -9,10 +9,12 @@ import MessengerPage from '@/pages/MessagerPage';
 import ProfilePage from '@/pages/user/Profile';
 
 export const publicRoutes = [
-  { path: '/profile/:id', component: ProfilePage, layout: AuthLayout },
-  { path: '/register', component: RegisterPage, layout: AuthLayout },
   { path: '/login', component: LoginPage, layout: AuthLayout },
+  { path: '/register', component: RegisterPage, layout: AuthLayout },
   { path: '/otp', component: OtpFormPage, layout: AuthLayout },
-  { path: '/', component: Home, layout: MainSidebarLayout },
+];
+export const privateRoutes = [
+  { path: '/profile/:id', component: ProfilePage, layout: AuthLayout },
   { path: '/messenger', component: MessengerPage, layout: MessengerLayout },
+  { path: '/', component: Home, layout: MainSidebarLayout },
 ];
