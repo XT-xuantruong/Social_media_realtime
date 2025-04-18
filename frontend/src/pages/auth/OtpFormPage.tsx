@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import ReusableForm, {
   FormItem,
-  FormLabel,
   FormControl,
   FormMessage,
   Input,
@@ -74,7 +73,7 @@ export default function OtpFormPage() {
           title: "Verify OTP Success",
           description: response.message,
         });
-        // Redirect to the main page or perform any other action
+        navigate("/login")
       }
     } catch (error: any) {
       toast({
@@ -131,7 +130,6 @@ export default function OtpFormPage() {
       >
         {({ setValue, formState: { errors } }) => (
           <FormItem>
-            <FormLabel>Mã OTP</FormLabel>
             <FormControl>
               <div className="flex gap-2 justify-center">
                 {otpState.map((value, index) => (
