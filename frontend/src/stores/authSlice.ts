@@ -8,7 +8,7 @@ interface AuthState {
     refreshToken: string | null;
   } | null;
   user: UserInfo | null;
-  friends: PaginatedResponse<UserInfo>|null;
+  friends: PaginatedResponse<UserInfo> | null;
 }
 
 const initialState: AuthState = {
@@ -21,11 +21,11 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setFriendOfUser:(
+    setFriendOfUser: (
       state,
-      action: PayloadAction<{friends: PaginatedResponse<UserInfo>}>
-    )=>{
-      state.friends=action.payload.friends
+      action: PayloadAction<{ friends: PaginatedResponse<UserInfo> }>
+    ) => {
+      state.friends = action.payload.friends;
     },
     setCredentials: (
       state,
@@ -47,9 +47,11 @@ const authSlice = createSlice({
     logout: (state) => {
       state.token = null;
       state.user = null;
+      state.friends = null;
     },
   },
 });
 
-export const { setCredentials, setUser, setFriendOfUser, logout } = authSlice.actions;
+export const { setCredentials, setUser, setFriendOfUser, logout } =
+  authSlice.actions;
 export default authSlice.reducer;

@@ -1,8 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { SearchIcon, MessageCircleIcon } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/stores';
+import { logout } from '@/stores/authSlice';
+import { SearchIcon, MessageCircleIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,32 +15,45 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import NotificationDropdown from '../NotificationDropdown';
+import { UserInfo } from '@/interfaces/user';
 
 export default function Header() {
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user as UserInfo | null);
 
   const handleOpenMessenger = () => {
-    navigate("/messenger");
+    navigate('/messenger');
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/login');
+  };
+
+  const MenuItem = ({ to, label, onClick }: { to: string; label: string; onClick?: () => void }) => (
+    <DropdownMenuItem asChild>
+      <Link to={to} className="w-full" onClick={onClick}>
+        {label}
+      </Link>
+    </DropdownMenuItem>
+  );
+
   return (
-    <header className="bg-white shadow-md z-20 w-full fixed top-0 left-0 right-0">
-      <div className="mx-auto px-5 py-1 flex items-center justify-between">
+    <header className="fixed inset-x-0 top-0 z-50 bg-white shadow-md">
+      <div className="mx-auto flex items-center justify-between px-5 py-1">
         {/* Logo */}
-        <Link
-          to="/"
-          className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors"
-        >
+        <Link to="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
           Social Media
         </Link>
 
         {/* Search Bar */}
-        <div className="relative flex-1 max-w-lg mx-4">
-          <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 size-5 text-gray-500" />
+        <div className="relative mx-4 max-w-lg flex-1">
+          <SearchIcon className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-500" />
           <Input
             type="text"
             placeholder="Search on Social Media"
-            className="w-full h-10 rounded-full bg-gray-100 border-none pl-14 pr-6 text-xl focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 transition-all"
+            className="h-10 w-full rounded-full border-none bg-gray-100 pl-14 pr-6 text-xl transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
           />
         </div>
 
@@ -62,30 +78,17 @@ export default function Header() {
                 aria-label="Profile"
               >
                 <Avatar className="h-9 w-9">
-                  <AvatarImage src="https://github.com/shadcn.png" alt="User avatar" />
-                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarImage src={user?.avatar_url} alt={user?.full_name} />
+                  <AvatarFallback>{user?.full_name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end">
-              <DropdownMenuLabel>My account</DropdownMenuLabel>
+            <DropdownMenuContent className="w-56 z-[60]" align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/profile" className="w-full">
-                  Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/settings" className="w-full">
-                  Settings
-                </Link>
-              </DropdownMenuItem>
+              <MenuItem to={`/profile/${user?.id || ''}`} label="Profile" />
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/logout" className="w-full">
-                  Logout
-                </Link>
-              </DropdownMenuItem>
+              <MenuItem to="/login" label="Logout" onClick={handleLogout} />
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

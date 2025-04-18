@@ -1,0 +1,13 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden; /* Ngăn thanh cuộn ngang */
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}

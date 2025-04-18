@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useGetPostsQuery } from '@/services/graphql/postServicesGQL'
 import FormCreatePost from '@/components/FormCreatePost';
 import PostItem from '@/components/PostItem';
-import { useGetPostsQuery } from '@/services/graphql/postServicesGQL'
-import { Button } from "@/components/ui/button";
 
 
 const Home = () => {
@@ -13,7 +13,6 @@ const Home = () => {
 
   const { data, isLoading, isFetching } = useGetPostsQuery({ limit, cursor });
 
-  // Tự động thêm dữ liệu mới vào allPosts khi data thay đổi
   useEffect(() => {
     if (data?.edges && data.edges.length > 0) {
       setAllPosts((prev) => {
