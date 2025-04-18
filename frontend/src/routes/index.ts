@@ -4,8 +4,8 @@ import MessengerLayout from '@/layouts/MessengerLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import OtpFormPage from '@/pages/auth/OtpFormPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
-import Home from '@/pages/Home';
-import MessengerPage from '@/pages/MessagerPage';
+import Home from '@/pages/user/Home';
+import MessengerPage from '@/pages/user/MessagerPage';
 import ProfilePage from '@/pages/user/Profile';
 
 export const publicRoutes = [

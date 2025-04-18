@@ -40,8 +40,10 @@ const createPostSchema = z.object({
 );
 
 type CreatePostFormData = z.infer<typeof createPostSchema>;
-
-export default function FormCreatePost() {
+interface FormCreatePostProps {
+  onPostCreated?: () => void;
+}
+export default function FormCreatePost({ onPostCreated }: FormCreatePostProps) {
   const user = useSelector((state: RootState) => state.auth.user as UserInfo | null);
   const [previews, setPreviews] = useState<string[]>([]);
   const [createPost, { isLoading }] = useCreatePostMutation();
@@ -72,6 +74,7 @@ export default function FormCreatePost() {
         description: result.message || "Post created successfully!",
       });
       setPreviews([]);
+      onPostCreated?.();
     } catch (error: any) {
       setModalTitle("Error");
       setModalDescription(error?.data?.message || "Failed to create post.");
