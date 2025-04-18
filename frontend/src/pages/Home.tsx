@@ -22,7 +22,7 @@ const Home = () => {
         return [...prev, ...newPosts];
       });
     }
-  }, [data]);
+  }, [data,cursor]);
 
   const handleLoadMore = () => {
     if (data?.pageInfo.hasNextPage) {

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { UploadService } from 'src/upload/upload.service';
@@ -17,7 +21,7 @@ export class PostsService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private uploadService: UploadService,
-  ) { }
+  ) {}
 
   async findOne(post_id: string): Promise<{
     post: Post;
@@ -46,34 +50,63 @@ export class PostsService {
     likeCounts: number[];
     commentCounts: number[];
   }> {
+    const realLimit = limit + 1; // Lấy thêm 1 để kiểm tra còn trang sau không
+
     const query = this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.user', 'user')
       .leftJoinAndSelect('post.likes', 'likes')
       .leftJoinAndSelect('post.comments', 'comments')
       .leftJoinAndSelect('comments.user', 'commentUser')
-      .orderBy('post.created_at', 'DESC')
-      .take(limit + 1);
+      .where('post.visibility = :visibility', { visibility: 'public' });
 
+    // Xử lý cursor
     if (cursor) {
-      const decodedCursor = Buffer.from(cursor, 'base64').toString('ascii');
-      query.where('post.created_at < :cursor', { cursor: decodedCursor });
+      try {
+        const decoded = Buffer.from(cursor, 'base64').toString('ascii');
+        const [createdAtStr, postIdStr] = decoded.split('|');
+        const createdAt = new Date(createdAtStr);
+
+        if (isNaN(createdAt.getTime())) {
+          throw new Error();
+        }
+
+        query.andWhere(
+          '(post.created_at < :createdAt OR (post.created_at = :createdAt AND post.post_id < :postIdStr))',
+          { createdAt, postIdStr },
+        );
+      } catch {
+        throw new BadRequestException('Invalid cursor format');
+      }
     }
 
-    const posts = await query.getMany();
-    const total = await this.postsRepository.count();
-    const hasNextPage = posts.length > limit;
+    // Sắp xếp theo thời gian giảm dần
+    query
+      .orderBy('post.created_at', 'DESC')
+      .addOrderBy('post.post_id', 'DESC')
+      .take(realLimit);
+
+    const fetchedPosts = await query.getMany();
+
+    const hasNextPage = fetchedPosts.length === realLimit;
+    const posts = hasNextPage ? fetchedPosts.slice(0, limit) : fetchedPosts;
+
+    // Tạo cursor mới nếu có trang tiếp theo
     const endCursor = hasNextPage
-      ? Buffer.from(posts[limit - 1].created_at.toISOString()).toString('base64')
+      ? Buffer.from(
+          `${posts[posts.length - 1].created_at.toISOString()}|${posts[posts.length - 1].post_id}`,
+        ).toString('base64')
       : undefined;
 
-    const likeCounts = posts.map((post) => (post.likes ? post.likes.length : 0));
-    const commentCounts = posts.map((post) =>
-      post.comments ? post.comments.length : 0,
-    );
+    const likeCounts = posts.map((post) => post.likes?.length ?? 0);
+    const commentCounts = posts.map((post) => post.comments?.length ?? 0);
+
+    const total = await this.postsRepository.count({
+      where: { visibility: 'public' },
+    });
 
     return {
-      posts: posts.slice(0, limit),
+      posts,
       hasNextPage,
       endCursor,
       total,
@@ -100,14 +133,20 @@ export class PostsService {
         .leftJoinAndSelect('post.user', 'user')
         .leftJoinAndSelect('post.likes', 'likes')
         .leftJoinAndSelect('post.comments', 'comments')
-        .where('LOWER(post.content) LIKE LOWER(:query)', { query: `%${query}%` })
+        .where('LOWER(post.content) LIKE LOWER(:query)', {
+          query: `%${query}%`,
+        })
         .orderBy('post.created_at', 'DESC')
         .take(limit + 1);
 
       if (cursor) {
         try {
-          const cursorDate = new Date(Buffer.from(cursor, 'base64').toString('ascii'));
-          queryBuilder.andWhere('post.created_at < :cursor', { cursor: cursorDate });
+          const cursorDate = new Date(
+            Buffer.from(cursor, 'base64').toString('ascii'),
+          );
+          queryBuilder.andWhere('post.created_at < :cursor', {
+            cursor: cursorDate,
+          });
         } catch (error) {
           throw new BadRequestException('Invalid cursor format');
         }
@@ -209,8 +248,4 @@ export class PostsService {
 
     await this.postsRepository.delete(postId);
   }
-}
-
-function TypeOrmLike(arg0: string): string | import("typeorm").FindOperator<string> {
-  throw new Error('Function not implemented.');
 }
