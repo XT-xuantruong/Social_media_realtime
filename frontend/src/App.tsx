@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/stores';
 import { publicRoutes, privateRoutes } from '@/routes';
 import './App.css';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Component để bảo vệ private routes
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -52,7 +53,7 @@ export default function App() {
         ))}
 
         {/* Route 404 (tùy chọn) */}
-        <Route path="*" element={<div>404 - Page Not Found</div>} />
+        <Route path="*" element={<NotFoundPage/>} />
       </Routes>
     </>
   );
