@@ -16,13 +16,23 @@ import NotificationDropdown from '../NotificationDropdown';
 import { UserInfo } from '@/interfaces/user';
 import { RootState } from '@/stores';
 import { useLogoutMutation } from '@/services/rest_api/AuthServices';
+import { FormEvent, useState } from 'react';
 
 export default function Header() {
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user as UserInfo | null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [logout] = useLogoutMutation()
   const handleOpenMessenger = () => {
     navigate('/messenger');
+  };
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery('');
+    }
   };
 
   const handleLogout = () => {
@@ -47,14 +57,16 @@ export default function Header() {
         </Link>
 
         {/* Search Bar */}
-        <div className="relative mx-4 max-w-lg flex-1">
+        <form onSubmit={handleSearch} className="relative mx-4 max-w-lg flex-1">
           <SearchIcon className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-gray-500" />
           <Input
             type="text"
             placeholder="Search on Social Media"
             className="h-10 w-full rounded-full border-none bg-gray-100 pl-14 pr-6 text-xl transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
+        </form>
 
         {/* Right Section */}
         <div className="flex items-center space-x-3">

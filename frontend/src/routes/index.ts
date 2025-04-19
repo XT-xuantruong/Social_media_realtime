@@ -7,6 +7,7 @@ import RegisterPage from '@/pages/auth/RegisterPage';
 import Home from '@/pages/user/Home';
 import MessengerPage from '@/pages/user/MessagerPage';
 import ProfilePage from '@/pages/user/Profile';
+import SearchResult from '@/pages/user/SearchResult';
 
 export const publicRoutes = [
   { path: '/login', component: LoginPage, layout: AuthLayout },
@@ -14,7 +15,8 @@ export const publicRoutes = [
   { path: '/otp', component: OtpFormPage, layout: AuthLayout },
 ];
 export const privateRoutes = [
+  { path: '/', component: Home, layout: MainSidebarLayout },
   { path: '/profile/:id', component: ProfilePage, layout: AuthLayout },
   { path: '/messenger', component: MessengerPage, layout: MessengerLayout },
-  { path: '/', component: Home, layout: MainSidebarLayout },
+  { path: '/search', component: SearchResult, layout: MainSidebarLayout },
 ];
