@@ -44,22 +44,29 @@ export default function SearchResult() {
   });
 
   // Theo dõi phần tử cuối danh sách để tải thêm dữ liệu
-  const { ref, inView } = useInView({
+  const { ref: userRef, inView: userInView } = useInView({
+    threshold: 0.5,
+    triggerOnce: false,
+    rootMargin: '200px 0px', // Kích hoạt sớm khi gần đến cuối
+  });
+
+  const { ref: postRef, inView: postInView } = useInView({
     threshold: 1.0,
     triggerOnce: false,
   });
 
   // Xử lý tải thêm dữ liệu khi cuộn
   useEffect(() => {
-    if (inView && !postFetching && !userFetching) {
-      if (postData?.pageInfo.hasNextPage) {
-        setPostCursor(postData.pageInfo.endCursor);
-      }
-      if (userData?.pageInfo.hasNextPage) {
-        setUserCursor(userData.pageInfo.endCursor);
-      }
+    if (userInView && !userFetching && userData?.pageInfo.hasNextPage) {
+      setUserCursor(userData.pageInfo.endCursor);
     }
-  }, [inView, postData, userData, postFetching, userFetching]);
+  }, [userInView, userData, userFetching]);
+
+  useEffect(() => {
+    if (postInView && !postFetching && postData?.pageInfo.hasNextPage) {
+      setPostCursor(postData.pageInfo.endCursor);
+    }
+  }, [postInView, postData, postFetching]);
 
   // Cập nhật danh sách bài viết khi nhận dữ liệu mới
   useEffect(() => {
@@ -72,7 +79,7 @@ export default function SearchResult() {
   useEffect(() => {
     if (userData?.edges) {
       setAllUsers((prev) => [...prev, ...userData.edges]);
-    }    
+    }
   }, [userData]);
 
   // Làm mới dữ liệu khi query thay đổi
@@ -106,17 +113,17 @@ export default function SearchResult() {
         </div>
       ) : (
         <>
-          <UserSearchResult users={allUsers} />
+          <UserSearchResult users={allUsers} userRef={userRef} isFetching={userFetching} hasNextPage={userData?.pageInfo.hasNextPage || false} />
           <PostSearchResult posts={allPosts} />
 
-          {isFetching && (
+          {isFetching && !userFetching && (
             <div className="flex justify-center my-4">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
           )}
 
-          {(postData?.pageInfo.hasNextPage || userData?.pageInfo.hasNextPage) && (
-            <div ref={ref} className="h-1" />
+          {postData?.pageInfo.hasNextPage && (
+            <div ref={postRef} className="h-1" />
           )}
 
           {!allPosts.length && !allUsers.length && !isLoading && (
