@@ -1,3 +1,5 @@
+import { PageInfo } from './pageInfo';
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -23,4 +25,13 @@ export interface UpdateUserDto {
   avatar_url?: string;
   bio?: string;
   privacy?: 'public' | 'private' | 'friends';
+}
+
+export interface UserEdge {
+  node: UserInfo;
+}
+
+export interface PaginatedResponse {
+  edges: UserEdge[];
+  pageInfo: PageInfo;
 }

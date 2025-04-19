@@ -1,17 +1,17 @@
-import { ReactNode } from "react";
-import Header from "@/components/Common/Header";
-import SidebarLeft from "@/components/Common/SidebarLeft";
+import { ReactNode } from 'react';
+import Header from '@/components/Common/Header';
+import SidebarLeft from '@/components/Common/SidebarLeft';
 
 export default function MainSidebarLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <Header />
-      <div className="flex flex-1 pt-20">
-        <div className="w-64 bg-white border-r">
+      <div className="flex flex-1">
+        <aside className="fixed top-16 w-64 bg-white border-r h-[calc(100vh-4rem)]">
           <SidebarLeft />
-        </div>
-        <main className="flex-1 flex justify-center items-start p-4">
-          <div className="max-w-4xl w-full">{children}</div>
+        </aside>
+        <main className="flex-1 mt-16 ml-64 p-4">
+          <div className="max-w-4xl mx-auto w-full">{children}</div>
         </main>
       </div>
     </div>

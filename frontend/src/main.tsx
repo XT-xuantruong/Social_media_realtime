@@ -6,13 +6,16 @@ import { PersistGate } from 'redux-persist/integration/react'; // Import Persist
 import App from "./App.tsx";
 import "./index.css";
 import { store, persistor } from "./stores/index.ts"; // Import cả store và persistor
+import { SocketProvider } from "./contexts/SocketContext.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <BrowserRouter>
-          <App />
+          <SocketProvider>
+            <App />
+          </SocketProvider>
         </BrowserRouter>
       </PersistGate>
     </Provider>

@@ -17,7 +17,7 @@ import { useRegisterMutation } from "@/services/rest_api/AuthServices";
 
 
 
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const registerSchema = z
   .object({
@@ -205,6 +205,9 @@ export default function RegisterPage() {
           </>
         )}
       </ReusableForm>
+      <p className="text-center text-gray-600 mt-4">
+        Already have an account? <Link to="/login" className="underline hover:text-blue-900">Login now</Link>
+      </p>
     </div>
   );
 }

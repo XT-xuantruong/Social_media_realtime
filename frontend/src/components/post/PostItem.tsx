@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Post } from "@/interfaces/post";
 import { Heart, MessageCircle, X } from "lucide-react";
-import { Input } from "./ui/input";
+import { Input } from "../ReusableForm";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { 
@@ -13,6 +13,7 @@ import {
   useUnlikePostMutation 
 } from "@/services/graphql/postServicesGQL";
 import { PostComment } from "@/interfaces/comment";
+import { Link } from "react-router-dom";
 
 interface PostItemProps {
   post: Post;
@@ -21,7 +22,7 @@ interface PostItemProps {
 }
 
 export default function PostItem({ post, likeCount, commentCount }: PostItemProps) {
-  const [isLiked, setIsLiked] = useState(false); // Giả sử trạng thái like (cần tích hợp với API để kiểm tra)
+  const [isLiked, setIsLiked] = useState(post.isLike);
   const [likeCounts, setLikeCounts] = useState(likeCount);
   
   const [commentContent, setCommentContent] = useState("");
@@ -32,7 +33,7 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
   const [createComment, { isLoading: isCreatingComment }] = useCreateCommentMutation();
   const [deleteComment, { isLoading: isDeletingComment }] = useDeleteCommentMutation();
   const { toast } = useToast();
-
+  
   const handleLike = async () => {
     try {
       await likePost({ postId: post.post_id }).unwrap();
@@ -69,6 +70,7 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
       toast({ title: "Error", description: error?.data?.message || "Failed to add comment." });
     }
   };
+  
 
   const handleDeleteComment = async (commentId: string) => {
     try {
@@ -84,11 +86,11 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
     <div className="bg-white p-4 rounded-lg shadow-md border mb-4">
       <div className="flex items-center space-x-3 mb-3">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={post.user.avatar_url || "https://github.com/shadcn.png"} alt={post.user.full_name} />
+          <AvatarImage src={post.user.avatar_url} alt={post.user.full_name} />
           <AvatarFallback>{post.user.full_name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-semibold text-gray-800">{post.user.full_name}</p>
+          <Link to={`/profile/${post.user.id}`} className=" text-sm font-semibold text-gray-800">{post.user.full_name}</Link>
           <p className="text-xs text-gray-500">
             {new Date(post.created_at).toLocaleDateString()}
           </p>
@@ -166,11 +168,11 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
         <Input
           placeholder="Add a comment..."
           value={commentContent}
-          onChange={(e) => setCommentContent(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCommentContent(e.target.value)}
           className="flex-1"
         />
         <Button onClick={handleCreateComment} disabled={isCreatingComment}>
-          Post
+          Comment
         </Button>
       </div>
     </div>

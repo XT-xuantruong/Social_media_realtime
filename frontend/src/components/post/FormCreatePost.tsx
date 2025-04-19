@@ -23,6 +23,9 @@ import { ImageIcon, XIcon } from "lucide-react";
 import { useCreatePostMutation } from "@/services/rest_api/postServices";
 import { useToast } from "@/hooks/use-toast";
 import ReusableForm, { FormField, FormItem, FormControl, FormMessage } from "@/components/ReusableForm";
+import { useSelector } from "react-redux";
+import { RootState } from "@/stores";
+import { UserInfo } from "@/interfaces/user";
 
 const createPostSchema = z.object({
   content: z.string().optional(),
@@ -37,8 +40,11 @@ const createPostSchema = z.object({
 );
 
 type CreatePostFormData = z.infer<typeof createPostSchema>;
-
-export default function FormCreatePost() {
+interface FormCreatePostProps {
+  onPostCreated?: () => void;
+}
+export default function FormCreatePost({ onPostCreated }: FormCreatePostProps) {
+  const user = useSelector((state: RootState) => state.auth.user as UserInfo | null);
   const [previews, setPreviews] = useState<string[]>([]);
   const [createPost, { isLoading }] = useCreatePostMutation();
   const { toast } = useToast();
@@ -68,6 +74,7 @@ export default function FormCreatePost() {
         description: result.message || "Post created successfully!",
       });
       setPreviews([]);
+      onPostCreated?.();
     } catch (error: any) {
       setModalTitle("Error");
       setModalDescription(error?.data?.message || "Failed to create post.");
@@ -98,11 +105,11 @@ export default function FormCreatePost() {
           <>
             <div className="flex items-center space-x-3 mb-4">
               <Avatar className="h-12 w-12">
-                <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarImage src={user?.avatar_url} alt="User" />
+                <AvatarFallback>{user?.full_name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 flex-1">
-                <p className="text-lg font-semibold text-gray-800">John Doe</p>
+                <p className="text-lg font-semibold text-gray-800">{user?.full_name}</p>
                 <FormField
                   control={form.control}
                   name="visibility"

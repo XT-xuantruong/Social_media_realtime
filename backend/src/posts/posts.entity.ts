@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  Index,
 } from 'typeorm';
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { User } from '../users/user.entity';
@@ -13,6 +14,7 @@ import { Like } from 'src/likes/likes.entity';
 import { Comment } from 'src/comments/comments.entity';
 
 @Entity('posts')
+@Index(['created_at', 'post_id'])
 @ObjectType()
 export class Post {
   @PrimaryGeneratedColumn('uuid')

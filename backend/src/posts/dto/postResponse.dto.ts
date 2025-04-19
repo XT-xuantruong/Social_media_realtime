@@ -1,16 +1,23 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
 import { Post } from '../posts.entity';
 import { PageInfo } from 'src/dto/graphql.response.dto';
+import { Like } from 'src/likes/likes.entity';
+import { User } from 'src/users/user.entity';
 
+@ObjectType()
+export class PostCustom extends Post {
+  @Field()
+  isLike: boolean;
+}
 // PostEdge cho danh sách bài đăng
 @ObjectType()
 export class PostEdge {
-  @Field(() => Post)
-  node: Post;
+  @Field(() => PostCustom)
+  node: PostCustom;
 
   @Field()
   cursor: string;
-      
+
   @Field(() => Int)
   likeCount: number;
 

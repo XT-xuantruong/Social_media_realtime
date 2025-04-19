@@ -65,7 +65,7 @@ export default function LoginPage() {
           title: "Google login successful",
           description: "Welcome back!",
         });
-        navigate("/home");
+        navigate("/");
       }
     } catch (error: any) {
       toast({
