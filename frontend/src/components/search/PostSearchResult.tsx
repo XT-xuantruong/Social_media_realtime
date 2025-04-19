@@ -7,7 +7,6 @@ interface PostSearchResultProps {
 }
 
 export default function PostSearchResult({ posts }: PostSearchResultProps) {
-  console.log("p",posts);
   
   return (
     <section>

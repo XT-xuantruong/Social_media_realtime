@@ -6,44 +6,89 @@ import { useInView } from 'react-intersection-observer';
 import UserSearchResult from '@/components/search/UserSearchResult';
 import PostSearchResult from '@/components/search/PostSearchResult';
 import { useSearchPostsQuery } from '@/services/graphql/postServicesGQL';
+import { useSearchUsersQuery } from '@/services/graphql/userServicesGQL';
 
 export default function SearchResult() {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q')?.trim() || '';
   const [limit] = useState(5);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [postCursor, setPostCursor] = useState<string | undefined>(undefined);
+  const [userCursor, setUserCursor] = useState<string | undefined>(undefined);
   const [allPosts, setAllPosts] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<any[]>([]);
 
-  const { data, isLoading, isFetching, error, refetch } = useSearchPostsQuery({
+  // Gọi API tìm kiếm bài viết
+  const {
+    data: postData,
+    isLoading: postLoading,
+    isFetching: postFetching,
+    error: postError,
+    refetch: refetchPosts,
+  } = useSearchPostsQuery({
     query,
     limit,
-    cursor,
+    cursor: postCursor,
   });
-  
 
+  // Gọi API tìm kiếm người dùng
+  const {
+    data: userData,
+    isLoading: userLoading,
+    isFetching: userFetching,
+    error: userError,
+    refetch: refetchUsers,
+  } = useSearchUsersQuery({
+    query,
+    limit,
+    cursor: userCursor,
+  });
+
+  // Theo dõi phần tử cuối danh sách để tải thêm dữ liệu
   const { ref, inView } = useInView({
     threshold: 1.0,
     triggerOnce: false,
   });
 
+  // Xử lý tải thêm dữ liệu khi cuộn
   useEffect(() => {
-    if (inView && data?.pageInfo.hasNextPage && !isFetching) {
-      setCursor(data.pageInfo.endCursor);
+    if (inView && !postFetching && !userFetching) {
+      if (postData?.pageInfo.hasNextPage) {
+        setPostCursor(postData.pageInfo.endCursor);
+      }
+      if (userData?.pageInfo.hasNextPage) {
+        setUserCursor(userData.pageInfo.endCursor);
+      }
     }
-  }, [inView, data, isFetching]);
+  }, [inView, postData, userData, postFetching, userFetching]);
 
+  // Cập nhật danh sách bài viết khi nhận dữ liệu mới
   useEffect(() => {
-    if (data?.edges) {
-      setAllPosts((prev) => [...prev, ...data.edges]);
-      
+    if (postData?.edges) {
+      setAllPosts((prev) => [...prev, ...postData.edges]);
     }
-  }, [data]);
+  }, [postData]);
 
+  // Cập nhật danh sách người dùng khi nhận dữ liệu mới
+  useEffect(() => {
+    if (userData?.edges) {
+      setAllUsers((prev) => [...prev, ...userData.edges]);
+    }    
+  }, [userData]);
+
+  // Làm mới dữ liệu khi query thay đổi
   useEffect(() => {
     setAllPosts([]);
-    setCursor(undefined);
-    refetch();
-  }, [query, refetch]);
+    setAllUsers([]);
+    setPostCursor(undefined);
+    setUserCursor(undefined);
+    refetchPosts();
+    refetchUsers();
+  }, [query, refetchPosts, refetchUsers]);
+
+  // Kiểm tra trạng thái tải và lỗi
+  const isLoading = postLoading || userLoading;
+  const isFetching = postFetching || userFetching;
+  const error = postError || userError;
 
   return (
     <div className="py-6 max-w-4xl mx-auto">
@@ -51,7 +96,7 @@ export default function SearchResult() {
         Search Results for "{query || 'All'}"
       </h1>
 
-      {isLoading && !allPosts.length ? (
+      {isLoading && !allPosts.length && !allUsers.length ? (
         <div className="flex justify-center items-center h-64">
           <Loader2 className="w-8 h-8 animate-spin" />
         </div>
@@ -61,23 +106,20 @@ export default function SearchResult() {
         </div>
       ) : (
         <>
-          <UserSearchResult users={[]} /> 
-          
+          <UserSearchResult users={allUsers} />
           <PostSearchResult posts={allPosts} />
-          
+
           {isFetching && (
             <div className="flex justify-center my-4">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
           )}
 
-          {/* Phần tử tham chiếu để kích hoạt tải thêm */}
-          {data?.pageInfo.hasNextPage && (
+          {(postData?.pageInfo.hasNextPage || userData?.pageInfo.hasNextPage) && (
             <div ref={ref} className="h-1" />
           )}
 
-          {/* Thông báo khi không có kết quả */}
-          {!allPosts.length && !isLoading && (
+          {!allPosts.length && !allUsers.length && !isLoading && (
             <p className="text-center text-gray-500">
               No results found for "{query}".
             </p>
