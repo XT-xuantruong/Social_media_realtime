@@ -60,31 +60,33 @@ export class PostsResolver {
     };
   }
 
-  // @Query(() => PostsListResponse)
-  // @UseGuards(JwtAccessGuard)
-  // async searchPosts(
-  //   @Args('query', { type: () => String }) query: string,
-  //   @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
-  //   @Args('cursor', { type: () => String, nullable: true }) cursor: string,
-  //   @CurrentUser() user: User,
-  // ): Promise<PostsListResponse> {
-  //   try {
-  //     const result = await this.postsService.searchPosts(query, limit, cursor);
-  //     return {
-  //       message: 'Tìm kiếm bài đăng thành công',
-  //       status: 200,
-  //       edges: result.edges,
-  //       pageInfo: result.pageInfo,
-  //     };
-  //   } catch (error) {
-  //     return {
-  //       message: `Tìm kiếm bài đăng thất bại: ${error.message}`,
-  //       status: 500,
-  //       edges: [],
-  //       pageInfo: { endCursor: null, hasNextPage: false, total: 0 },
-  //     };
-  //   }
-  // }
+  @Query(() => PostsListResponse)
+  @UseGuards(JwtAccessGuard)
+  async searchPosts(
+    @Args('query', { type: () => String }) query: string,
+    @Args('limit', { type: () => Int }) limit: number,
+    @Args('cursor', { type: () => String, nullable: true }) cursor?: string,
+    @CurrentUser() user?: any,
+  ): Promise<PostsListResponse> {
+    const { posts, hasNextPage, endCursor, total, likeCounts, commentCounts } =
+      await this.postsService.searchPosts(query, limit, cursor, user.userId);
+
+    return {
+      message: 'Posts retrieved successfully',
+      status: 200,
+      edges: posts.map((post, index) => ({
+        node: post,
+        cursor: Buffer.from(post.created_at.toISOString()).toString('base64'),
+        likeCount: likeCounts[index], // Số lượng like cho bài đăng
+        commentCount: commentCounts[index], // Số lượng comment cho bài đăng
+      })),
+      pageInfo: {
+        endCursor,
+        hasNextPage,
+        total,
+      },
+    };
+  }
 
   @Mutation(() => String)
   @UseGuards(JwtAccessGuard)

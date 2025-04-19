@@ -22,7 +22,7 @@ interface PostItemProps {
 }
 
 export default function PostItem({ post, likeCount, commentCount }: PostItemProps) {
-  const [isLiked, setIsLiked] = useState(post.isLike); // Giả sử trạng thái like (cần tích hợp với API để kiểm tra)
+  const [isLiked, setIsLiked] = useState(post.isLike);
   const [likeCounts, setLikeCounts] = useState(likeCount);
   
   const [commentContent, setCommentContent] = useState("");
@@ -33,7 +33,7 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
   const [createComment, { isLoading: isCreatingComment }] = useCreateCommentMutation();
   const [deleteComment, { isLoading: isDeletingComment }] = useDeleteCommentMutation();
   const { toast } = useToast();
-
+  
   const handleLike = async () => {
     try {
       await likePost({ postId: post.post_id }).unwrap();
