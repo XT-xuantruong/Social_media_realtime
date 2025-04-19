@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { baseRestApi } from './baseRestApi';
-import { setCredentials, setFriendOfUser, setUser } from '@/stores/authSlice';
+import {
+  logout,
+  setCredentials,
+  setFriendOfUser,
+  setUser,
+} from '@/stores/authSlice';
 import { RootState, store } from '@/stores';
 import { UserCredentials, UserInfo } from '@/interfaces/user';
 import { ApiResponse } from '@/interfaces/apiResponse';
@@ -211,6 +216,32 @@ export const authServices = baseRestApi.injectEndpoints({
         }
       },
     }),
+    logout: builder.mutation<
+      { data: any; message: string; status: number },
+      void
+    >({
+      query: () => ({
+        url: `${entity}/logout`,
+        method: 'POST',
+        body: {
+          refreshToken: (store.getState() as RootState).auth.token
+            ?.refreshToken,
+        },
+      }),
+      transformResponse: (response: ApiResponse<any>) => ({
+        data: response.data,
+        message: response.message,
+        status: response.status,
+      }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+          dispatch(logout());
+        } catch (error) {
+          console.error('Logout failed:', error);
+        }
+      },
+    }),
   }),
 });
 
@@ -221,4 +252,5 @@ export const {
   useSendOtpMutation,
   useVerifyOtpMutation,
   useLoginGoogleMutation,
+  useLogoutMutation,
 } = authServices;

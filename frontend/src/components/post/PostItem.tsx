@@ -13,6 +13,7 @@ import {
   useUnlikePostMutation 
 } from "@/services/graphql/postServicesGQL";
 import { PostComment } from "@/interfaces/comment";
+import { Link } from "react-router-dom";
 
 interface PostItemProps {
   post: Post;
@@ -69,6 +70,7 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
       toast({ title: "Error", description: error?.data?.message || "Failed to add comment." });
     }
   };
+  
 
   const handleDeleteComment = async (commentId: string) => {
     try {
@@ -88,7 +90,7 @@ export default function PostItem({ post, likeCount, commentCount }: PostItemProp
           <AvatarFallback>{post.user.full_name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div>
-          <p className="text-sm font-semibold text-gray-800">{post.user.full_name}</p>
+          <Link to={`/profile/${post.user.id}`} className=" text-sm font-semibold text-gray-800">{post.user.full_name}</Link>
           <p className="text-xs text-gray-500">
             {new Date(post.created_at).toLocaleDateString()}
           </p>

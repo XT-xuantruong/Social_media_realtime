@@ -1,7 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState, AppDispatch } from '@/stores';
-import { logout } from '@/stores/authSlice';
+import { useSelector } from 'react-redux';
 import { SearchIcon, MessageCircleIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,18 +14,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import NotificationDropdown from '../NotificationDropdown';
 import { UserInfo } from '@/interfaces/user';
+import { RootState } from '@/stores';
+import { useLogoutMutation } from '@/services/rest_api/AuthServices';
 
 export default function Header() {
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const user = useSelector((state: RootState) => state.auth.user as UserInfo | null);
-
+  const [logout] = useLogoutMutation()
   const handleOpenMessenger = () => {
     navigate('/messenger');
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    logout().unwrap();
     navigate('/login');
   };
 
