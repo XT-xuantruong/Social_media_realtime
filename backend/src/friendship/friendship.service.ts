@@ -21,35 +21,39 @@ export class FriendshipService {
 
   async getFriends(limit: number, offset: number, currentUserId: string): Promise<PaginatedUserResponse> {
     const [items, total] = await this.friendshipRepository.findAndCount({
-      where: [{user: { id: currentUserId }}, { friend :{id: currentUserId}}],
+      where: [
+        { user: { id: currentUserId }, status: 'accepted' }, // Chỉ lấy các mối quan hệ đã được chấp nhận
+        { friend: { id: currentUserId }, status: 'accepted' },
+      ],
       take: limit,
       skip: offset,
       relations: ['user', 'friend'],
     });
-    console.log(items);
-    
-
+  
+    // Map dữ liệu để trả về thông tin bạn bè
     const plainFriends = items.map((f) => {
-      const plainFriend = classToPlain(f.friend);
+      // Xác định friendId: người không phải currentUserId
+      const friendId = f.user.id === currentUserId ? f.friend.id : f.user.id;
+      const friendData = f.user.id === currentUserId ? f.friend : f.user;
+  
+      const plainFriend = classToPlain(friendData);
       return {
         ...plainFriend,
-        friend_status: f.status, 
+        friend_status: f.status,
         friendshipId: f.friendshipId,
-        friendId: f.user.id
+        friendId: friendId, // friendId là ID của người bạn
       };
     });
-
-  const mappedItems = plainToClass(
-    UserType,
-    plainFriends,
-    { excludeExtraneousValues: true },
-  );
-
-      return {
-        items: mappedItems,
-        total,
-      };
-    }
+  
+    const mappedItems = plainToClass(UserType, plainFriends, {
+      excludeExtraneousValues: true,
+    });
+  
+    return {
+      items: mappedItems,
+      total,
+    };
+  }
 
   async getFriendRequests(limit: number, offset: number, currentUserId: string): Promise<PaginatedFriendshipResponse> {
     const [items, total] = await this.friendshipRepository.findAndCount({
