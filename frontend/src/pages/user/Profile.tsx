@@ -91,14 +91,22 @@ export default function ProfilePage() {
   > | null>(null);
 
   const me = useSelector((state: RootState) => state.auth.user);
-  const friendOfMe = useSelector((state: RootState) => state.auth.friends);
-  console.log(friendOfMe);
+
+  // Lấy danh sách bạn bè của người dùng hiện tại (để kiểm tra trạng thái mối quan hệ)
+  const { data: myFriendsData, refetch: refetchMyFriends } = useGetFriendsQuery(
+    { limit: 100, offset: 0, currentUserId: me?.id || '' },
+    { skip: !me?.id }
+  );
+
+  // Danh sách bạn bè của người dùng hiện tại (tương tự friendOfMe, nhưng làm mới từ API)
+  const friendOfMe = myFriendsData;
 
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
   const { data: userByID, isLoading: isFetchingUser } = useGetByIdQuery(
     id as string
   );
 
+  // Lấy danh sách bạn bè của profile đang xem
   const { data: friendsData, refetch: refetchFriends } = useGetFriendsQuery(
     { limit: 10, offset: 0, currentUserId: id || '' },
     { skip: !id || !userByID?.data?.id }
@@ -115,6 +123,21 @@ export default function ProfilePage() {
   const [sendFriendRequest] = useSendFriendRequestMutation();
   const [removeFriend] = useUnfriendMutation();
 
+  useEffect(() => {
+    // Handle friend requests
+    if (friendRequestsData) {
+      setFriendRequests(friendRequestsData);
+    }
+
+    // Handle friends
+    if (friendsData && userByID) {
+      let filteredFriends = friendsData.items.filter(
+        (friend: UserInfo) => friend.friend_status === 'accepted'
+      );
+      setFriend({ ...friendsData, items: filteredFriends });
+    }
+  }, [friendsData, friendRequestsData, userByID]);
+
   const handleAccept = async (friendId: string) => {
     await acceptFriendRequest({
       friendshipId: friendId,
@@ -128,6 +151,7 @@ export default function ProfilePage() {
         });
         await refetchFriendRequests();
         await refetchFriends();
+        await refetchMyFriends(); // Làm mới danh sách bạn bè của người dùng hiện tại
       });
   };
 
@@ -139,10 +163,11 @@ export default function ProfilePage() {
       .unwrap()
       .then(async () => {
         toast({
-          title: 'Friend Request Rejectted',
+          title: 'Friend Request Rejected',
           description: `You have rejected the friend request`,
         });
         await refetchFriendRequests();
+        await refetchMyFriends();
       });
   };
 
@@ -158,6 +183,7 @@ export default function ProfilePage() {
           description: 'This user has been removed from your friends list.',
         });
         await refetchFriends();
+        await refetchMyFriends();
       });
   };
 
@@ -173,19 +199,17 @@ export default function ProfilePage() {
           description: 'Your friend request has been successfully sent.',
         });
         setFriendStatus('sent');
+        await refetchFriends();
+        await refetchMyFriends(); // Làm mới danh sách bạn bè của người dùng hiện tại
       });
   };
 
   const isCheck = (idCheck: string, status: string) => {
-    console.log('code1', friendOfMe);
-    console.log('code2', friendsData);
     return friendOfMe?.items.some((item) => {
-      if (item.id !== me?.id) {
-        console.log('code3', idCheck);
-
-        return item.id === idCheck && item.friend_status === status;
-      }
-      return false;
+      return (
+        (item.id === idCheck || item.friendId === idCheck) &&
+        item.friend_status === status
+      );
     });
   };
 
@@ -200,21 +224,7 @@ export default function ProfilePage() {
         }
       }
     });
-  }, [friendsData, userByID]);
-
-  useEffect(() => {
-    if (friendRequestsData) {
-      setFriendRequests(friendRequestsData);
-    }
-
-    if (friendsData) {
-      const filteredFriends = friendsData.items.filter(
-        (friend: UserInfo) => friend.friend_status == 'accepted'
-      );
-
-      setFriend({ ...friendsData, items: filteredFriends });
-    }
-  }, [friendsData, friendRequestsData]);
+  }, [friendOfMe, id]);
 
   useEffect(() => {
     if (userByID) {
@@ -441,10 +451,12 @@ export default function ProfilePage() {
         <TabsContent value="friend">
           <Table>
             <TableBody>
-              {friends?.items.map(
-                (friend) =>
-                  friend.id !== me?.id && (
-                    <TableRow key={friend.id}>
+              {friends?.items
+                .filter((friend) => (friend.id !== id))
+                .map((friend) => {
+                  const friendId = friend.friendId;
+                  return (
+                    <TableRow key={friendId}>
                       <TableCell className="font-medium">
                         <Avatar className="w-20 h-20 rounded-md">
                           <AvatarImage src={friend.avatar_url} />
@@ -458,20 +470,12 @@ export default function ProfilePage() {
                         <div className="space-x-2">
                           {userByID.data.id !== me?.id ? (
                             <>
-                              {isCheck(
-                                friend.id === id ? friend.friendId : friend.id,
-                                'accepted'
-                              ) ? (
+                              {isCheck(friendId, 'accepted') ? (
                                 <Button variant="outline" disabled>
                                   <Users />
                                   Friend
                                 </Button>
-                              ) : isCheck(
-                                  friend.id === id
-                                    ? friend.friendId
-                                    : friend.id,
-                                  'pending'
-                                ) ? (
+                              ) : isCheck(friendId, 'pending') ? (
                                 <Button variant="outline" disabled>
                                   <SendHorizontal />
                                   Sent
@@ -479,9 +483,7 @@ export default function ProfilePage() {
                               ) : (
                                 <Button
                                   variant="outline"
-                                  onClick={() => {
-                                    hadlesend(friend.id);
-                                  }}
+                                  onClick={() => hadlesend(friendId)}
                                 >
                                   <UserRoundPlus />
                                   Add friend
@@ -500,23 +502,16 @@ export default function ProfilePage() {
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>
-                                      Are you sure you want to remove this
-                                      friend?
+                                      Are you sure you want to remove this friend?
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This action cannot be undone. You and this
-                                      user will no longer be connected as
-                                      friends.
+                                      This action cannot be undone. You and this user will no longer be connected as friends.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancel
-                                    </AlertDialogCancel>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction
-                                      onClick={() =>
-                                        handleremove(friend.friendshipId)
-                                      }
+                                      onClick={() => handleremove(friend.friendshipId)}
                                     >
                                       Continue
                                     </AlertDialogAction>
@@ -528,8 +523,8 @@ export default function ProfilePage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  )
-              )}
+                  );
+                })}
             </TableBody>
           </Table>
         </TabsContent>
@@ -551,9 +546,7 @@ export default function ProfilePage() {
                         <div className="space-x-2">
                           <Button
                             variant="outline"
-                            onClick={() =>
-                              handleAccept(friendRequest.friendshipId)
-                            }
+                            onClick={() => handleAccept(friendRequest.friendshipId)}
                           >
                             <Check />
                             Accept
@@ -568,20 +561,16 @@ export default function ProfilePage() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  Are you sure you want to reject this friend
-                                  request?
+                                  Are you sure you want to reject this friend request?
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. The user will
-                                  not be added to your friend list.
+                                  This action cannot be undone. The user will not be added to your friend list.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() =>
-                                    handlereject(friendRequest.friendshipId)
-                                  }
+                                  onClick={() => handlereject(friendRequest.friendshipId)}
                                 >
                                   Continue
                                 </AlertDialogAction>
