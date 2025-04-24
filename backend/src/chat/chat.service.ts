@@ -224,16 +224,18 @@ export class ChatService {
     limit: number = 10,
     cursor?: string,
   ): Promise<PaginatedChatRoomsResponse> {
+    // Truy vấn lấy tất cả room mà userId tham gia
     const query = this.chatRoomRepository
       .createQueryBuilder('room')
-      .leftJoinAndSelect('room.roomUsers', 'roomUsers')
-      .leftJoinAndSelect('roomUsers.user', 'user')
+      .leftJoin('room.roomUsers', 'roomUsersCheck') // Join để kiểm tra userId tồn tại
+      .leftJoin('roomUsersCheck.user', 'userCheck')
+      .where('userCheck.id = :userId', { userId }) // Đảm bảo room có userId
+      .leftJoinAndSelect('room.roomUsers', 'roomUsers') // Lấy tất cả roomUsers
+      .leftJoinAndSelect('roomUsers.user', 'user') // Lấy thông tin user
       .leftJoinAndSelect('room.messages', 'messages')
       .leftJoinAndSelect('messages.sender', 'sender')
-      .where('user.id = :userId', { userId })
       .orderBy('room.created_at', 'DESC')
       .take(limit + 1);
-    console.log(await query.getMany());
 
     if (cursor) {
       try {
@@ -247,13 +249,19 @@ export class ChatService {
     }
 
     const rooms = await query.getMany();
-    // Lấy danh sách tất cả user trong roomUsers
-    const allUsersInRooms = rooms.flatMap((room) =>
-      room.roomUsers.map((roomUser) => roomUser.user),
-    );
 
-    console.log('All users in rooms:', allUsersInRooms);
+    // Xử lý room để chỉ giữ user còn lại (khác với userId)
+    const roomsWithOtherUser = rooms.map((room) => {
+      const otherUser = room.roomUsers.find(
+        (roomUser) => roomUser.user.id !== userId,
+      );
+      return {
+        ...room,
+        roomUsers: otherUser ? [otherUser] : [], // Chỉ trả về user còn lại
+      };
+    });
 
+    // Đếm tổng số room
     const total = await this.chatRoomRepository
       .createQueryBuilder('room')
       .leftJoin('room.roomUsers', 'roomUsers')
@@ -262,7 +270,7 @@ export class ChatService {
       .getCount();
 
     const hasNextPage = rooms.length > limit;
-    const roomsToReturn = rooms.slice(0, limit);
+    const roomsToReturn = roomsWithOtherUser.slice(0, limit);
 
     const edges = roomsToReturn.map((room) => ({
       node: room,
