@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
@@ -35,10 +36,13 @@ export const useNotifications = () => {
         let message = '';
         switch (node.type) {
           case 'like':
-            message = `${node.user.full_name} liked your post`;
+            message = `${node.user.full_name} liked your post.`;
             break;
           case 'comment':
-            message = `${node.user.full_name} commented on your post`;
+            message = `${node.user.full_name} commented on your post.`;
+            break;
+          case 'friend_request':
+            message = `${node.user.full_name} would like to add you as a friend.`;
             break;
           default:
             message = `New notification from ${node.user.full_name}`;
@@ -132,7 +136,7 @@ export const useNotifications = () => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [accessToken]); // Re-run khi accessToken thay đổi
+  }, [accessToken]);
 
   return { notifications, setNotifications };
 };
