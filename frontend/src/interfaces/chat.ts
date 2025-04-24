@@ -9,6 +9,12 @@ export interface ChatRoom {
   messages?: Message[];
 }
 
+export interface ChatRoomRequest {
+  is_group?: boolean;
+  name?: string;
+  user_ids: string[];
+}
+
 export interface ChatRoomUser {
   room_user_id: string;
   user: { id: string; full_name: string; avatar_url: string };

@@ -82,7 +82,7 @@ export default function ChatSidebar() {
 
   return (
     <div className="w-80 bg-white p-4 border-l h-[calc(100vh-3.5rem)]">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Tin nhắn</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Tin nhắn</h3>
       {connectionStatus === 'connecting' && (
         <p className="text-gray-600">Đang kết nối đến server chat...</p>
       )}
