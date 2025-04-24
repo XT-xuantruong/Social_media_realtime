@@ -13,7 +13,7 @@ export class NotificationsService {
     private notificationsRepository: Repository<Notification>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    private readonly notificationsGateway: NotificationsGateway, // Tiêm Gateway
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   async getNotifications(
