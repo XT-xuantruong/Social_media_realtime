@@ -233,6 +233,7 @@ export class ChatService {
       .where('user.id = :userId', { userId })
       .orderBy('room.created_at', 'DESC')
       .take(limit + 1);
+    console.log(await query.getMany());
 
     if (cursor) {
       try {
@@ -246,6 +247,12 @@ export class ChatService {
     }
 
     const rooms = await query.getMany();
+    // Lấy danh sách tất cả user trong roomUsers
+    const allUsersInRooms = rooms.flatMap((room) =>
+      room.roomUsers.map((roomUser) => roomUser.user),
+    );
+
+    console.log('All users in rooms:', allUsersInRooms);
 
     const total = await this.chatRoomRepository
       .createQueryBuilder('room')

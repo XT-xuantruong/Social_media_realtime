@@ -19,5 +19,6 @@ import { JwtService } from '@nestjs/jwt';
   ],
   controllers: [ChatController],
   providers: [ChatService, ChatResolver, ChatGateway, JwtService],
+  exports: [ChatService],
 })
 export class ChatModule {}

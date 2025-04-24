@@ -124,7 +124,10 @@ type UserResponse {
 
 type UserType {
   id: ID!
+  friendId: String!
   email: String!
+  friend_status: String
+  friendshipId: String
   password: String
   full_name: String
   avatar_url: String
@@ -158,29 +161,6 @@ type PaginatedUserResponse {
 type PaginatedFriendshipResponse {
   items: [Friendship!]
   total: Int!
-}
-
-type PostEdge {
-  node: Post!
-  cursor: String!
-  likeCount: Int!
-  commentCount: Int!
-}
-
-type PostResponse {
-  message: String!
-  status: Int!
-  data: Post!
-  pagination: PageInfo
-  likeCount: Int!
-  commentCount: Int!
-}
-
-type PostsListResponse {
-  message: String!
-  status: Int!
-  edges: [PostEdge!]!
-  pageInfo: PageInfo!
 }
 
 type NotificationEdge {
@@ -227,17 +207,53 @@ type PaginatedChatRoomsResponse {
   pageInfo: PageInfo!
 }
 
+type PostCustom {
+  post_id: ID!
+  user: User!
+  content: String!
+  media_url: [String!]
+  created_at: DateTime!
+  updated_at: DateTime
+  visibility: String!
+  likes: [Like!]
+  comments: [Comment!]
+  isLike: Boolean!
+}
+
+type PostEdge {
+  node: PostCustom!
+  cursor: String!
+  likeCount: Int!
+  commentCount: Int!
+}
+
+type PostResponse {
+  message: String!
+  status: Int!
+  data: Post!
+  pagination: PageInfo
+  likeCount: Int!
+  commentCount: Int!
+}
+
+type PostsListResponse {
+  message: String!
+  status: Int!
+  edges: [PostEdge!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   hello: String!
   searchUsers(query: String!, limit: Int! = 10, cursor: String): UserResponse!
   getFriends(limit: Int, offset: Int, currentUserId: String!): PaginatedUserResponse!
   getFriendRequests(limit: Int, offset: Int, currentUserId: String!): PaginatedFriendshipResponse!
-  getPost(postId: String!): PostResponse!
-  getPosts(limit: Int!, cursor: String): PostsListResponse!
-  searchPosts(query: String!, limit: Int! = 10, cursor: String): PostsListResponse!
   getNotifications(limit: Int, cursor: String): NotificationResponse!
   getMessages(room_id: String!, limit: Int! = 20, cursor: String): MessagesListResponse!
   getChatRooms(limit: Int! = 10, cursor: String): PaginatedChatRoomsResponse!
+  getPost(postId: String!): PostResponse!
+  getPosts(limit: Int!, cursor: String): PostsListResponse!
+  searchPosts(query: String!, limit: Int!, cursor: String): PostsListResponse!
 }
 
 type Mutation {
@@ -245,12 +261,12 @@ type Mutation {
   acceptFriendRequest(friendshipId: String!, currentUserId: String!): Friendship!
   rejectFriendRequest(friendshipId: String!, currentUserId: String!): Boolean!
   removeFriend(friendshipId: String!, currentUserId: String!): Boolean!
+  markNotificationAsRead(notificationId: String!): Notification!
+  sendMessage(input: SendMessageInput!): MessageResponse!
   likePost(postId: String!): String!
   unlikePost(postId: String!): String!
-  markNotificationAsRead(notificationId: String!): Notification!
   createComment(postId: String!, content: String!): Comment!
   deleteComment(commentId: String!): String!
-  sendMessage(input: SendMessageInput!): MessageResponse!
 }
 
 input SendMessageInput {
