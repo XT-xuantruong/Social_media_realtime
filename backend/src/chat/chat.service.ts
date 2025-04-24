@@ -229,7 +229,7 @@ export class ChatService {
       .createQueryBuilder('room')
       .leftJoin('room.roomUsers', 'roomUsersCheck') // Join để kiểm tra userId tồn tại
       .leftJoin('roomUsersCheck.user', 'userCheck')
-      .where('userCheck.id = :userId', { userId }) // Đảm bảo room có userId
+      .where('userCheck.id = :userId', { userId })
       .leftJoinAndSelect('room.roomUsers', 'roomUsers') // Lấy tất cả roomUsers
       .leftJoinAndSelect('roomUsers.user', 'user') // Lấy thông tin user
       .leftJoinAndSelect('room.messages', 'messages')
