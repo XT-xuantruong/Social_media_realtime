@@ -1,12 +1,21 @@
-import { Injectable, BadRequestException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Friendship } from './friendship.entity';
 import { User } from 'src/users/user.entity';
-import { PaginatedUserResponse, PaginatedFriendshipResponse } from './dto/paginated-response.dto';
+import {
+  PaginatedUserResponse,
+  PaginatedFriendshipResponse,
+} from './dto/paginated-response.dto';
 import { UserType } from 'src/users/user.type';
 import { classToPlain, plainToClass } from 'class-transformer';
 import { NotificationsService } from 'src/notifications/notifications.service';
+import { ChatService } from 'src/chat/chat.service';
 
 @Injectable()
 export class FriendshipService {
@@ -16,10 +25,14 @@ export class FriendshipService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private notificationsService: NotificationsService,
-
+    private chatService: ChatService,
   ) {}
 
-  async getFriends(limit: number, offset: number, currentUserId: string): Promise<PaginatedUserResponse> {
+  async getFriends(
+    limit: number,
+    offset: number,
+    currentUserId: string,
+  ): Promise<PaginatedUserResponse> {
     const [items, total] = await this.friendshipRepository.findAndCount({
       where: [
         { user: { id: currentUserId }, status: 'accepted' }, // Chỉ lấy các mối quan hệ đã được chấp nhận
@@ -29,13 +42,13 @@ export class FriendshipService {
       skip: offset,
       relations: ['user', 'friend'],
     });
-  
+
     // Map dữ liệu để trả về thông tin bạn bè
     const plainFriends = items.map((f) => {
       // Xác định friendId: người không phải currentUserId
       const friendId = f.user.id === currentUserId ? f.friend.id : f.user.id;
       const friendData = f.user.id === currentUserId ? f.friend : f.user;
-  
+
       const plainFriend = classToPlain(friendData);
       return {
         ...plainFriend,
@@ -44,18 +57,22 @@ export class FriendshipService {
         friendId: friendId, // friendId là ID của người bạn
       };
     });
-  
+
     const mappedItems = plainToClass(UserType, plainFriends, {
       excludeExtraneousValues: true,
     });
-  
+
     return {
       items: mappedItems,
       total,
     };
   }
 
-  async getFriendRequests(limit: number, offset: number, currentUserId: string): Promise<PaginatedFriendshipResponse> {
+  async getFriendRequests(
+    limit: number,
+    offset: number,
+    currentUserId: string,
+  ): Promise<PaginatedFriendshipResponse> {
     const [items, total] = await this.friendshipRepository.findAndCount({
       where: { friend: { id: currentUserId }, status: 'pending' },
       take: limit,
@@ -66,9 +83,16 @@ export class FriendshipService {
     return { items, total };
   }
 
-  async sendFriendRequest(friendId: string, currentUserId: string): Promise<Friendship> {
-    const currentUser = await this.userRepository.findOne({ where: { id: currentUserId } });
-    const friend = await this.userRepository.findOne({ where: { id: friendId } });
+  async sendFriendRequest(
+    friendId: string,
+    currentUserId: string,
+  ): Promise<Friendship> {
+    const currentUser = await this.userRepository.findOne({
+      where: { id: currentUserId },
+    });
+    const friend = await this.userRepository.findOne({
+      where: { id: friendId },
+    });
 
     const friendship = this.friendshipRepository.create({
       user: currentUser,
@@ -77,12 +101,19 @@ export class FriendshipService {
       createdAt: new Date().toISOString(),
     });
 
-    await this.notificationsService.createNotification(currentUserId,  'friend_request', friendId);
-    
+    await this.notificationsService.createNotification(
+      friend.id,
+      'friend_request',
+      currentUser.id,
+    );
+
     return this.friendshipRepository.save(friendship);
   }
 
-  async acceptFriendRequest(friendshipId: string, currentUserId: string): Promise<Friendship> {
+  async acceptFriendRequest(
+    friendshipId: string,
+    currentUserId: string,
+  ): Promise<Friendship> {
     const friendship = await this.friendshipRepository.findOne({
       where: { friendshipId },
       relations: ['user', 'friend'],
@@ -93,7 +124,9 @@ export class FriendshipService {
     }
 
     if (friendship.friend.id !== currentUserId) {
-      throw new UnauthorizedException('You are not authorized to accept this friend request');
+      throw new UnauthorizedException(
+        'You are not authorized to accept this friend request',
+      );
     }
 
     if (friendship.status !== 'pending') {
@@ -101,10 +134,17 @@ export class FriendshipService {
     }
 
     friendship.status = 'accepted';
+    await this.chatService.createChatRoom(
+      { user_ids: [friendship.user.id, currentUserId] },
+      currentUserId,
+    );
     return this.friendshipRepository.save(friendship);
   }
 
-  async rejectFriendRequest(friendshipId: string, currentUserId: string): Promise<void> {
+  async rejectFriendRequest(
+    friendshipId: string,
+    currentUserId: string,
+  ): Promise<void> {
     const friendship = await this.friendshipRepository.findOne({
       where: { friendshipId },
       relations: ['user', 'friend'],
@@ -115,7 +155,9 @@ export class FriendshipService {
     }
 
     if (friendship.friend.id !== currentUserId) {
-      throw new UnauthorizedException('You are not authorized to reject this friend request');
+      throw new UnauthorizedException(
+        'You are not authorized to reject this friend request',
+      );
     }
 
     if (friendship.status !== 'pending') {
@@ -125,7 +167,10 @@ export class FriendshipService {
     await this.friendshipRepository.remove(friendship);
   }
 
-  async removeFriend(friendshipId: string, currentUserId: string): Promise<void> {
+  async removeFriend(
+    friendshipId: string,
+    currentUserId: string,
+  ): Promise<void> {
     const friendship = await this.friendshipRepository.findOne({
       where: { friendshipId },
       relations: ['user', 'friend'],
@@ -135,12 +180,19 @@ export class FriendshipService {
       throw new NotFoundException('Friendship not found');
     }
 
-    if (friendship.user.id !== currentUserId && friendship.friend.id !== currentUserId) {
-      throw new UnauthorizedException('You are not authorized to remove this friendship');
+    if (
+      friendship.user.id !== currentUserId &&
+      friendship.friend.id !== currentUserId
+    ) {
+      throw new UnauthorizedException(
+        'You are not authorized to remove this friendship',
+      );
     }
 
     if (friendship.status !== 'accepted') {
-      throw new BadRequestException('This relationship is not an accepted friendship');
+      throw new BadRequestException(
+        'This relationship is not an accepted friendship',
+      );
     }
 
     await this.friendshipRepository.remove(friendship);

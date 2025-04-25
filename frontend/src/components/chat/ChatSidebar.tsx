@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/stores';
 import { setSelectedRoom, setMessages } from '@/stores/chatSlice';
 import { useGetChatRoomsQuery } from '@/services/graphql/chatServicesGQL';
 import { ChatRoom } from '@/interfaces/chat';
 import ChatRoomItem from './ChatRoomItem';
-import { useSearchParams } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSocket } from '@/contexts/SocketContext';
 
@@ -13,7 +11,6 @@ export default function ChatSidebar() {
   const dispatch = useDispatch<AppDispatch>();
   const selectedRoom = useSelector((state: RootState) => state.chat.selectedRoom);
   const allMessages = useSelector((state: RootState) => state.chat.allMessages);
-  const [searchParams, setSearchParams] = useSearchParams();
   const { socketService, connectionStatus } = useSocket();
   const { data, isLoading, error } = useGetChatRoomsQuery({
     limit: 10,
@@ -31,7 +28,6 @@ export default function ChatSidebar() {
     socketService.joinRoom(room.room_id);
     console.log('Joined room:', room.room_id);
     dispatch(setSelectedRoom(room));
-    setSearchParams({ room: room.room_id });
     dispatch(setMessages({ roomId: room.room_id, messages: [] }));
   };
 
@@ -86,7 +82,7 @@ export default function ChatSidebar() {
 
   return (
     <div className="w-80 bg-white p-4 border-l h-[calc(100vh-3.5rem)]">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Tin nhắn</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Tin nhắn</h3>
       {connectionStatus === 'connecting' && (
         <p className="text-gray-600">Đang kết nối đến server chat...</p>
       )}

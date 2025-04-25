@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { Comment } from './comments.entity';
 import { Post } from 'src/posts/posts.entity';
 import { User } from '../users/user.entity';
+import { NotificationsService } from 'src/notifications/notifications.service';
 
 @Injectable()
 export class CommentsService {
@@ -18,6 +19,7 @@ export class CommentsService {
     private postsRepository: Repository<Post>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private notificationsService: NotificationsService,
   ) {}
 
   async createComment(
@@ -28,6 +30,7 @@ export class CommentsService {
     // Kiểm tra bài đăng có tồn tại không
     const post = await this.postsRepository.findOne({
       where: { post_id: postId },
+      relations: ['user'],
     });
     if (!post) {
       throw new NotFoundException('Post not found');
@@ -45,9 +48,17 @@ export class CommentsService {
       user,
       content,
     });
-    console.log(userId, comment.user.id);
+    const savedComment = await this.commentsRepository.save(comment);
 
-    return this.commentsRepository.save(comment);
+    if (post.user.id !== userId) {
+      await this.notificationsService.createNotification(
+        savedComment.post.user.id,
+        'comment',
+        postId,
+      );
+    }
+
+    return savedComment;
   }
 
   async deleteComment(commentId: string, userId: string): Promise<string> {
