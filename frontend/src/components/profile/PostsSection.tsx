@@ -3,17 +3,16 @@ import { useState, useEffect } from 'react';
 import { useInView } from 'react-intersection-observer';
 import FormCreatePost from '@/components/post/FormCreatePost';
 import PostItem from '@/components/post/PostItem';
-import { useGetPostsQuery } from '@/services/graphql/postServicesGQL';
+import { useGetMyPostsQuery } from '@/services/graphql/postServicesGQL';
 
 interface PostsSectionProps {
   userId: string;
 }
-
 export const PostsSection = ({ userId }: PostsSectionProps) => {
   const [limit] = useState(5);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [allPosts, setAllPosts] = useState<any[]>([]);
-  const { data, isLoading, isFetching, refetch } = useGetPostsQuery({ limit, cursor });
+  const { data, isLoading, isFetching, refetch } = useGetMyPostsQuery({ limit, cursor, userId });
 
   const { ref: inViewRef, inView } = useInView({
     threshold: 1.0,
