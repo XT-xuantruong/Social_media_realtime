@@ -18,14 +18,14 @@ const Home = () => {
     triggerOnce: false,
   });
 
-  // 👇 callback khi tạo bài viết mới
+  //  callback khi tạo bài viết mới
   const handlePostCreated = async () => {
     setAllPosts([]);
     setCursor(undefined);
     await refetch();
   };
 
-  // 👇 cập nhật bài viết mới khi dữ liệu thay đổi
+  // cập nhật bài viết mới khi dữ liệu thay đổi
   useEffect(() => {
     if (data?.edges && data.edges.length > 0) {
       setAllPosts((prev) => {
