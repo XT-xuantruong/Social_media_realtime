@@ -2,7 +2,7 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/index';
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import ReusableForm, {
   FormField,
   FormItem,
@@ -74,6 +74,9 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfilePage() {
+  const [friendStatuses, setFriendStatuses] = useState<{
+    [key: string]: 'add' | 'sent' | 'friend';
+  }>({});
   const { toast } = useToast();
   const { id } = useParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,13 +95,11 @@ export default function ProfilePage() {
 
   const me = useSelector((state: RootState) => state.auth.user);
 
-  // Lấy danh sách bạn bè của người dùng hiện tại (để kiểm tra trạng thái mối quan hệ)
   const { data: myFriendsData, refetch: refetchMyFriends } = useGetFriendsQuery(
     { limit: 100, offset: 0, currentUserId: me?.id || '' },
     { skip: !me?.id }
   );
 
-  // Danh sách bạn bè của người dùng hiện tại (tương tự friendOfMe, nhưng làm mới từ API)
   const friendOfMe = myFriendsData;
 
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
@@ -124,14 +125,76 @@ export default function ProfilePage() {
   const [removeFriend] = useUnfriendMutation();
 
   useEffect(() => {
-    // Handle friend requests
+    if (friendOfMe?.items) {
+      const initialStatuses: { [key: string]: 'add' | 'sent' | 'friend' } = {};
+      friendOfMe.items.forEach((item) => {
+        const friendId = item.id === id ? item.friendId : item.id;
+        if (friendId) {
+          if (item.friend_status === 'pending') {
+            initialStatuses[friendId] = 'sent';
+          } else if (item.friend_status === 'accepted') {
+            initialStatuses[friendId] = 'friend';
+          } else {
+            initialStatuses[friendId] = 'add';
+          }
+        }
+      });
+      setFriendStatuses(initialStatuses);
+    }
+  }, [friendOfMe, id]);
+
+  const handleSendFriendRequestInList = async (friendId: string) => {
+    if (!friendId || !me?.id) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'User information is missing. Please try again later.',
+      });
+      return;
+    }
+
+    try {
+      setFriendStatuses((prev) => ({
+        ...prev,
+        [friendId]: 'sent',
+      }));
+
+      await sendFriendRequest({
+        friendId: friendId,
+        currentUserId: me.id,
+      })
+        .unwrap()
+        .then(async () => {
+          toast({
+            title: 'Friend Request Sent',
+            description: 'Your friend request has been successfully sent.',
+          });
+          await refetchFriends();
+          await refetchMyFriends();
+          setFriendRequests(friendRequestsData ?? null);
+        });
+    } catch (error) {
+      // Nếu API thất bại, hoàn nguyên trạng thái
+      setFriendStatuses((prev) => ({
+        ...prev,
+        [friendId]: 'add',
+      }));
+      toast({
+        variant: 'destructive',
+        title: 'Failed to Send Friend Request',
+        description: 'An error occurred while sending the friend request.',
+      });
+      console.error('Error sending friend request:', error);
+    }
+  };
+
+  useEffect(() => {
     if (friendRequestsData) {
       setFriendRequests(friendRequestsData);
     }
 
-    // Handle friends
     if (friendsData && userByID) {
-      let filteredFriends = friendsData.items.filter(
+      const filteredFriends = friendsData.items.filter(
         (friend: UserInfo) => friend.friend_status === 'accepted'
       );
       setFriend({ ...friendsData, items: filteredFriends });
@@ -151,7 +214,7 @@ export default function ProfilePage() {
         });
         await refetchFriendRequests();
         await refetchFriends();
-        await refetchMyFriends(); // Làm mới danh sách bạn bè của người dùng hiện tại
+        await refetchMyFriends();
       });
   };
 
@@ -200,17 +263,8 @@ export default function ProfilePage() {
         });
         setFriendStatus('sent');
         await refetchFriends();
-        await refetchMyFriends(); // Làm mới danh sách bạn bè của người dùng hiện tại
+        await refetchMyFriends();
       });
-  };
-
-  const isCheck = (idCheck: string, status: string) => {
-    return friendOfMe?.items.some((item) => {
-      return (
-        (item.id === idCheck || item.friendId === idCheck) &&
-        item.friend_status === status
-      );
-    });
   };
 
   useEffect(() => {
@@ -452,30 +506,33 @@ export default function ProfilePage() {
           <Table>
             <TableBody>
               {friends?.items
-                .filter((friend) => (friend.id !== id))
+                .filter((friend) => friend.id !== id)
                 .map((friend) => {
                   const friendId = friend.friendId;
+                  const status = friendStatuses[friendId] || 'add';
                   return (
                     <TableRow key={friendId}>
-                      <TableCell className="font-medium">
-                        <Avatar className="w-20 h-20 rounded-md">
-                          <AvatarImage src={friend.avatar_url} />
-                          <AvatarFallback>
-                            {friend.full_name?.[0] || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>{friend.full_name}</TableCell>
+                      <Link to={`/profile/${friend.id}`}>
+                        <TableCell className="font-medium">
+                          <Avatar className="w-20 h-20 rounded-md">
+                            <AvatarImage src={friend.avatar_url} />
+                            <AvatarFallback>
+                              {friend.full_name?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        </TableCell>
+                        <TableCell>{friend.full_name}</TableCell>
+                      </Link>
                       <TableCell className="text-right">
                         <div className="space-x-2">
-                          {userByID.data.id !== me?.id ? (
+                          {id !== me?.id ? (
                             <>
-                              {isCheck(friendId, 'accepted') ? (
+                              {status === 'friend' ? (
                                 <Button variant="outline" disabled>
                                   <Users />
                                   Friend
                                 </Button>
-                              ) : isCheck(friendId, 'pending') ? (
+                              ) : status === 'sent' ? (
                                 <Button variant="outline" disabled>
                                   <SendHorizontal />
                                   Sent
@@ -483,7 +540,9 @@ export default function ProfilePage() {
                               ) : (
                                 <Button
                                   variant="outline"
-                                  onClick={() => hadlesend(friendId)}
+                                  onClick={() =>
+                                    handleSendFriendRequestInList(friendId)
+                                  }
                                 >
                                   <UserRoundPlus />
                                   Add friend
@@ -491,34 +550,35 @@ export default function ProfilePage() {
                               )}
                             </>
                           ) : (
-                            <>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline">
-                                    <UserRoundX />
-                                    Unfriend
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Are you sure you want to remove this friend?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. You and this user will no longer be connected as friends.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleremove(friend.friendshipId)}
-                                    >
-                                      Continue
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline">
+                                  <UserRoundX />
+                                  Unfriend
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Are you sure you want to remove this friend?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. You and this
+                                    user will no longer be connected as friends.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() =>
+                                      handleremove(friend.friendshipId)
+                                    }
+                                  >
+                                    Continue
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           )}
                         </div>
                       </TableCell>
@@ -546,7 +606,9 @@ export default function ProfilePage() {
                         <div className="space-x-2">
                           <Button
                             variant="outline"
-                            onClick={() => handleAccept(friendRequest.friendshipId)}
+                            onClick={() =>
+                              handleAccept(friendRequest.friendshipId)
+                            }
                           >
                             <Check />
                             Accept
@@ -561,16 +623,20 @@ export default function ProfilePage() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  Are you sure you want to reject this friend request?
+                                  Are you sure you want to reject this friend
+                                  request?
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. The user will not be added to your friend list.
+                                  This action cannot be undone. The user will
+                                  not be added to your friend list.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
-                                  onClick={() => handlereject(friendRequest.friendshipId)}
+                                  onClick={() =>
+                                    handlereject(friendRequest.friendshipId)
+                                  }
                                 >
                                   Continue
                                 </AlertDialogAction>
