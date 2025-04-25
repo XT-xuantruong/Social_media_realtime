@@ -119,6 +119,90 @@ export class PostsService {
     };
   }
 
+  async findMyPosts(
+    limit: number,
+    cursor?: string,
+    currentUserId?: string,
+  ): Promise<{
+    posts: PostCustom[];
+    hasNextPage: boolean;
+    endCursor?: string;
+    total: number;
+    likeCounts: number[];
+    commentCounts: number[];
+  }> {
+    if (!currentUserId) {
+      throw new BadRequestException('currentUserId is required');
+    }
+
+    const realLimit = limit + 1;
+
+    const query = this.postsRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.user', 'user')
+      .leftJoinAndSelect('post.likes', 'likes')
+      .leftJoinAndSelect('likes.user', 'likeUser')
+      .leftJoinAndSelect('post.comments', 'comments')
+      .leftJoinAndSelect('comments.user', 'commentUser')
+      .where('post.userId = :currentUserId', { currentUserId });
+
+    if (cursor) {
+      try {
+        const decoded = Buffer.from(cursor, 'base64').toString('ascii');
+        const [createdAtStr, postIdStr] = decoded.split('|');
+        const createdAt = new Date(createdAtStr);
+
+        if (isNaN(createdAt.getTime())) throw new Error();
+
+        query.andWhere(
+          '(post.created_at < :createdAt OR (post.created_at = :createdAt AND post.post_id < :postIdStr))',
+          { createdAt, postIdStr },
+        );
+      } catch {
+        throw new BadRequestException('Invalid cursor format');
+      }
+    }
+
+    query
+      .orderBy('post.created_at', 'DESC')
+      .addOrderBy('post.post_id', 'DESC')
+      .take(realLimit);
+
+    const fetchedPosts = await query.getMany();
+    const hasNextPage = fetchedPosts.length === realLimit;
+    const posts = hasNextPage ? fetchedPosts.slice(0, limit) : fetchedPosts;
+
+    const postsWithIsLike = posts.map((post) => {
+      const isLike =
+        post.likes?.some((like) => like.user?.id === currentUserId) ?? false;
+      return { ...post, isLike };
+    });
+
+    const endCursor = hasNextPage
+      ? Buffer.from(
+          `${posts[posts.length - 1].created_at.toISOString()}|${
+            posts[posts.length - 1].post_id
+          }`,
+        ).toString('base64')
+      : undefined;
+
+    const likeCounts = posts.map((post) => post.likes?.length ?? 0);
+    const commentCounts = posts.map((post) => post.comments?.length ?? 0);
+
+    const total = await this.postsRepository.count({
+      where: { user: { id: currentUserId } },
+    });
+
+    return {
+      posts: postsWithIsLike,
+      hasNextPage,
+      endCursor,
+      total,
+      likeCounts,
+      commentCounts,
+    };
+  }
+
   async searchPosts(
     q: string,
     limit: number,
