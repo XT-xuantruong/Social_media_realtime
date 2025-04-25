@@ -4,6 +4,7 @@ import MessengerLayout from '@/layouts/MessengerLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import OtpFormPage from '@/pages/auth/OtpFormPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
+import FriendsPage from '@/pages/user/FriendsPage';
 import Home from '@/pages/user/Home';
 import MessengerPage from '@/pages/user/MessagerPage';
 import ProfilePage from '@/pages/user/Profile';
@@ -19,4 +20,5 @@ export const privateRoutes = [
   { path: '/profile/:id', component: ProfilePage, layout: AuthLayout },
   { path: '/messenger', component: MessengerPage, layout: MessengerLayout },
   { path: '/search', component: SearchResult, layout: MainSidebarLayout },
+  { path: '/friends', component: FriendsPage, layout: MainSidebarLayout },
 ];
