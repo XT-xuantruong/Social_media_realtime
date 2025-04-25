@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/stores/index';
 import { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +29,7 @@ import { Check, UserRoundPlus, UserRoundX, X, Users, SendHorizontal } from 'luci
 import { FriendRequest, PaginatedResponse } from '@/interfaces/friend';
 import { UserInfo } from '@/interfaces/user';
 import { Link } from 'react-router-dom';
+import { Card, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function FriendsPage() {
   const me = useSelector((state: RootState) => state.auth.user);
@@ -37,19 +37,18 @@ export default function FriendsPage() {
     [key: string]: 'add' | 'sent' | 'friend';
   }>({});
   const { toast } = useToast();
-  const id  = me?.id;
+  const id = me?.id;
   const [friends, setFriends] = useState<PaginatedResponse<UserInfo> | null>(null);
   const [friendRequests, setFriendRequests] = useState<PaginatedResponse<
     FriendRequest<UserInfo>
   > | null>(null);
 
-
   // Get current user's friends
-  const { 
-    data: myFriendsData, 
-    refetch: refetchMyFriends, 
-    isLoading: isLoadingMyFriends, 
-    error: myFriendsError 
+  const {
+    data: myFriendsData,
+    refetch: refetchMyFriends,
+    isLoading: isLoadingMyFriends,
+    error: myFriendsError,
   } = useGetFriendsQuery(
     { limit: 100, offset: 0, currentUserId: me?.id || '' },
     { skip: !me?.id }
@@ -58,21 +57,21 @@ export default function FriendsPage() {
   const friendOfMe = myFriendsData;
 
   // Get friends of viewed profile
-  const { 
-    data: friendsData, 
-    refetch: refetchFriends, 
-    isLoading: isLoadingFriends, 
-    error: friendsError 
+  const {
+    data: friendsData,
+    refetch: refetchFriends,
+    isLoading: isLoadingFriends,
+    error: friendsError,
   } = useGetFriendsQuery(
     { limit: 10, offset: 0, currentUserId: id || '' },
     { skip: !id }
   );
 
-  const { 
-    data: friendRequestsData, 
-    refetch: refetchFriendRequests, 
-    isLoading: isLoadingFriendRequests, 
-    error: friendRequestsError 
+  const {
+    data: friendRequestsData,
+    refetch: refetchFriendRequests,
+    isLoading: isLoadingFriendRequests,
+    error: friendRequestsError,
   } = useGetFriendRequestsQuery(
     { limit: 10, offset: 0, currentUserId: id || '' },
     { skip: !id || !me?.id }
@@ -105,13 +104,13 @@ export default function FriendsPage() {
   useEffect(() => {
     // Handle friend requests
     if (friendRequestsData) {
-      console.log("Friend Requests Data:", friendRequestsData); // Debugging
+      console.log('Friend Requests Data:', friendRequestsData); // Debugging
       setFriendRequests(friendRequestsData);
     }
 
     // Handle friends
     if (friendsData) {
-      console.log("Friends Data:", friendsData); // Debugging
+      console.log('Friends Data:', friendsData); // Debugging
       const filteredFriends = friendsData.items.filter(
         (friend: UserInfo) => friend.friend_status === 'accepted'
       );
@@ -226,12 +225,12 @@ export default function FriendsPage() {
   }
 
   return (
-    <div className="w-full max-w-xl p-8 bg-white border rounded-lg shadow-lg">
+    <div className="w-full max-w-4xl p-8 bg-white border rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Friends
       </h2>
 
-      <Tabs defaultValue="friend" className="w-full h-[400px]">
+      <Tabs defaultValue="friend" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="friend">Friends</TabsTrigger>
           <TabsTrigger value="friend_request">Friend Requests</TabsTrigger>
@@ -240,155 +239,156 @@ export default function FriendsPage() {
           {friends?.items.length === 0 ? (
             <div className="text-center text-gray-500">No friends to display.</div>
           ) : (
-            <Table>
-              <TableBody>
-                {friends?.items
-                  .filter((friend) => friend.id !== id)
-                  .map((friend) => {
-                    const friendId = friend.friendId;
-                    const status = friendStatuses[friendId] || 'add';
-                    return (
-                        <TableRow key={friendId}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {friends?.items
+                .filter((friend) => friend.id !== id)
+                .map((friend) => {
+                  const friendId = friend.friendId;
+                  const status = friendStatuses[friendId] || 'add';
+                  return (
+                    <Card key={friendId} className="flex flex-col items-center">
+                      <CardHeader>
                         <Link to={`/profile/${friend.id}`}>
-                          <TableCell className="font-medium">
-                            <Avatar className="w-20 h-20 rounded-md">
-                              <AvatarImage src={friend.avatar_url} />
-                              <AvatarFallback>
-                                {friend.full_name?.[0] || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                          </TableCell>
-                          <TableCell>{friend.full_name}</TableCell>
+                          <Avatar className="w-20 h-20 rounded-md mx-auto">
+                            <AvatarImage src={friend.avatar_url} />
+                            <AvatarFallback>
+                              {friend.full_name?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
                         </Link>
-                        <TableCell className="text-right">
-                          <div className="space-x-2">
-                            {id !== me?.id ? (
-                              <>
-                                {status === 'friend' ? (
-                                  <Button variant="outline" disabled>
-                                    <Users />
-                                    Friend
-                                  </Button>
-                                ) : status === 'sent' ? (
-                                  <Button variant="outline" disabled>
-                                    <SendHorizontal />
-                                    Sent
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    variant="outline"
-                                    onClick={() =>
-                                      handleSendFriendRequestInList(friendId)
-                                    }
-                                  >
-                                    <UserRoundPlus />
-                                    Add friend
-                                  </Button>
-                                )}
-                              </>
+                        <CardTitle className="text-center mt-2">
+                          <Link to={`/profile/${friend.id}`}>
+                            {friend.full_name}
+                          </Link>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardFooter className="flex space-x-2">
+                        {id !== me?.id ? (
+                          <>
+                            {status === 'friend' ? (
+                              <Button variant="outline" disabled>
+                                <Users className="mr-2 h-4 w-4" />
+                                Friend
+                              </Button>
+                            ) : status === 'sent' ? (
+                              <Button variant="outline" disabled>
+                                <SendHorizontal className="mr-2 h-4 w-4" />
+                                Sent
+                              </Button>
                             ) : (
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="outline">
-                                    <UserRoundX />
-                                    Unfriend
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      Are you sure you want to remove this friend?
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      This action cannot be undone. You and this
-                                      user will no longer be connected as friends.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>
-                                      Cancel
-                                    </AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() =>
-                                        handleRemove(friend.friendshipId)
-                                      }
-                                    >
-                                      Continue
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
+                              <Button
+                                variant="outline"
+                                onClick={() =>
+                                  handleSendFriendRequestInList(friendId)
+                                }
+                              >
+                                <UserRoundPlus className="mr-2 h-4 w-4" />
+                                Add friend
+                              </Button>
                             )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
+                          </>
+                        ) : (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline">
+                                <UserRoundX className="mr-2 h-4 w-4" />
+                                Unfriend
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Are you sure you want to remove this friend?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. You and this
+                                  user will no longer be connected as friends.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleRemove(friend.friendshipId)
+                                  }
+                                >
+                                  Continue
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+            </div>
           )}
         </TabsContent>
         <TabsContent value="friend_request">
           {friendRequests?.items.length === 0 ? (
             <div className="text-center text-gray-500">No friend requests.</div>
           ) : (
-            <Table>
-              <TableBody>
-                {friendRequests?.items.map((friendRequest) => (
-                  <TableRow key={friendRequest.user.id}>
-                    <TableCell className="font-medium">
-                      <Avatar className="w-20 h-20 rounded-md">
-                        <AvatarImage src={friendRequest.user.avatar_url} />
-                        <AvatarFallback>CN</AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>{friendRequest.user.full_name}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="space-x-2">
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            handleAccept(friendRequest.friendshipId)
-                          }
-                        >
-                          <Check />
-                          Accept
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {friendRequests?.items.map((friendRequest) => (
+                <Card
+                  key={friendRequest.user.id}
+                  className="flex flex-col items-center"
+                >
+                  <CardHeader>
+                    <Avatar className="w-20 h-20 rounded-md mx-auto">
+                      <AvatarImage src={friendRequest.user.avatar_url} />
+                      <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
+                    <CardTitle className="text-center mt-2">
+                      {friendRequest.user.full_name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardFooter className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        handleAccept(friendRequest.friendshipId)
+                      }
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Accept
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline">
+                          <X className="mr-2 h-4 w-4" />
+                          Reject
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline">
-                              <X />
-                              Reject
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you sure you want to reject this friend request?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. The user will
-                                not be added to your friend list.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() =>
-                                  handleReject(friendRequest.friendshipId)
-                                }
-                              >
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you sure you want to reject this friend request?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. The user will
+                            not be added to your friend list.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() =>
+                              handleReject(friendRequest.friendshipId)
+                            }
+                          >
+                            Continue
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           )}
         </TabsContent>
       </Tabs>
