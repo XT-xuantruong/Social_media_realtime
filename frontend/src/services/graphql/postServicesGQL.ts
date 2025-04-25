@@ -80,6 +80,56 @@ export const postServicesGQL = baseGraphqlApi.injectEndpoints({
       transformResponse: (response: { getPosts: PaginatedResponse }) =>
         response.getPosts,
     }),
+    getMyPosts: builder.query<
+      PaginatedResponse,
+      { limit: number; cursor?: string; userId: string }
+    >({
+      query: ({ limit, userId, cursor }) => ({
+        query: `
+      query getMyPosts($limit: Int!, $userId: String!, $cursor: String) {
+        getMyPosts(limit: $limit, cursor: $cursor, userId: $userId) {
+          edges {
+            node {
+              post_id
+              content
+              media_url
+              created_at
+              updated_at
+              visibility
+              isLike
+              user {
+                id
+                full_name
+                avatar_url
+              }
+              comments {
+                comment_id
+                content
+                created_at
+                user {
+                  id
+                  full_name
+                  avatar_url
+                }
+              }
+            }
+            cursor
+            likeCount
+            commentCount
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+            total
+          }
+        }
+      }
+    `,
+        variables: { limit, userId, cursor },
+      }),
+      transformResponse: (response: { getMyPosts: PaginatedResponse }) =>
+        response.getMyPosts,
+    }),
     searchPosts: builder.query<
       PaginatedResponse,
       { query: string; limit: number; cursor?: string }
@@ -206,6 +256,7 @@ export const postServicesGQL = baseGraphqlApi.injectEndpoints({
 export const {
   useGetPostQuery,
   useGetPostsQuery,
+  useGetMyPostsQuery,
   useSearchPostsQuery,
   useLikePostMutation,
   useUnlikePostMutation,

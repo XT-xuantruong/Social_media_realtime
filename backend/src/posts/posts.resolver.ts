@@ -62,6 +62,33 @@ export class PostsResolver {
 
   @Query(() => PostsListResponse)
   @UseGuards(JwtAccessGuard)
+  async getMyPosts(
+    @Args('limit', { type: () => Int }) limit: number,
+    @Args('userId', { type: () => String }) userId: string,
+    @Args('cursor', { type: () => String, nullable: true }) cursor?: string,
+  ): Promise<PostsListResponse> {
+    const { posts, hasNextPage, endCursor, total, likeCounts, commentCounts } =
+      await this.postsService.findMyPosts(limit, cursor, userId);
+
+    return {
+      message: 'Posts retrieved successfully',
+      status: 200,
+      edges: posts.map((post, index) => ({
+        node: post,
+        cursor: Buffer.from(post.created_at.toISOString()).toString('base64'),
+        likeCount: likeCounts[index],
+        commentCount: commentCounts[index],
+      })),
+      pageInfo: {
+        endCursor,
+        hasNextPage,
+        total,
+      },
+    };
+  }
+
+  @Query(() => PostsListResponse)
+  @UseGuards(JwtAccessGuard)
   async searchPosts(
     @Args('query', { type: () => String }) query: string,
     @Args('limit', { type: () => Int }) limit: number,

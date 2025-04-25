@@ -1,9 +1,13 @@
+import Header from "@/components/Common/Header";
 import { ReactNode } from "react";
 
 export default function FullscreenLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-4 max-w-3xl w-full">{children}</div>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+        <main className="mt-16 p-4">
+          <div className="mx-auto w-full">{children}</div>
+        </main>
     </div>
   );
 }

@@ -1,31 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from "react";
-import { useInView } from "react-intersection-observer"; // 👈 import thư viện
-import { useGetPostsQuery } from "@/services/graphql/postServicesGQL";
-import FormCreatePost from "@/components/post/FormCreatePost";
-import PostItem from "@/components/post/PostItem";
+import { useState, useEffect } from 'react';
+import { useInView } from 'react-intersection-observer';
+import FormCreatePost from '@/components/post/FormCreatePost';
+import PostItem from '@/components/post/PostItem';
+import { useGetMyPostsQuery } from '@/services/graphql/postServicesGQL';
 
-const Home = () => {
+interface PostsSectionProps {
+  userId: string;
+}
+export const PostsSection = ({ userId }: PostsSectionProps) => {
   const [limit] = useState(5);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [allPosts, setAllPosts] = useState<any[]>([]);
+  const { data, isLoading, isFetching, refetch } = useGetMyPostsQuery({ limit, cursor, userId });
 
-  const { data, isLoading, isFetching, refetch } = useGetPostsQuery({ limit, cursor });
-
-  // 👇 tạo ref từ useInView
-  const { ref, inView } = useInView({
+  const { ref: inViewRef, inView } = useInView({
     threshold: 1.0,
     triggerOnce: false,
   });
 
-  //  callback khi tạo bài viết mới
   const handlePostCreated = async () => {
     setAllPosts([]);
     setCursor(undefined);
     await refetch();
   };
 
-  // cập nhật bài viết mới khi dữ liệu thay đổi
   useEffect(() => {
     if (data?.edges && data.edges.length > 0) {
       setAllPosts((prev) => {
@@ -37,7 +36,6 @@ const Home = () => {
     }
   }, [data, cursor]);
 
-  // 👇 infinite scroll: khi inView là true và có nextPage
   useEffect(() => {
     if (inView && data?.pageInfo.hasNextPage && !isFetching) {
       setCursor(data.pageInfo.endCursor);
@@ -45,36 +43,35 @@ const Home = () => {
   }, [inView, data, isFetching]);
 
   return (
-    <div className="max-w-2xl mx-auto py-6">
+    <div>
       <FormCreatePost onPostCreated={handlePostCreated} />
-
-      <div className="mt-6">
+      <div className="bg-white p-4 rounded-lg border mt-4 shadow">
+        <h2 className="text-lg font-semibold mb-4">Posts</h2>
         {allPosts.length > 0 ? (
           allPosts.map((edge, index) => {
             const isLast = index === allPosts.length - 1;
             return (
               <div
                 key={edge.node.post_id}
-                ref={isLast ? ref : null} // 👈 ref vào phần tử cuối
+                ref={isLast ? inViewRef : null}
               >
                 <PostItem
                   post={edge.node}
-                  likeCount={edge.likeCount}
-                  commentCount={edge.commentCount}
+                  likeCount={edge.node.likeCount || 0}
+                  commentCount={edge.node.comments?.length || 0}
                 />
               </div>
             );
           })
         ) : (
-          !isLoading && !isFetching && <p className="text-center text-gray-500">No posts available.</p>
+          !isLoading && !isFetching && (
+            <p className="text-gray-600">No posts available.</p>
+          )
         )}
-
         {isLoading || isFetching ? (
-          <p className="text-center text-gray-500 mt-4">Loading...</p>
+          <p className="text-gray-600 mt-4 text-center">Loading posts...</p>
         ) : null}
       </div>
     </div>
   );
 };
-
-export default Home;

@@ -1,4 +1,5 @@
 import AuthLayout from '@/layouts/AuthLayout';
+import FullscreenLayout from '@/layouts/FullscreenLayout';
 import MainSidebarLayout from '@/layouts/MainSidebarLayout';
 import MessengerLayout from '@/layouts/MessengerLayout';
 import LoginPage from '@/pages/auth/LoginPage';
@@ -17,7 +18,7 @@ export const publicRoutes = [
 ];
 export const privateRoutes = [
   { path: '/', component: Home, layout: MainSidebarLayout },
-  { path: '/profile/:id', component: ProfilePage, layout: AuthLayout },
+  { path: '/profile/:id', component: ProfilePage, layout: FullscreenLayout },
   { path: '/messenger', component: MessengerPage, layout: MessengerLayout },
   { path: '/search', component: SearchResult, layout: MainSidebarLayout },
   { path: '/friends', component: FriendsPage, layout: MainSidebarLayout },
