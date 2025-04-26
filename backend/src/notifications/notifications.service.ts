@@ -1,7 +1,7 @@
 // notifications.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, Not } from 'typeorm';
 import { Notification } from './notifications.entity';
 import { User } from '../users/user.entity';
 import { NotificationsGateway } from './notifications.gateway';
@@ -26,10 +26,10 @@ export class NotificationsService {
     endCursor?: string;
     total: number;
   }> {
-    console.log('userId', userId);
+    // console.log('userId', userId);
 
     const queryOptions: any = {
-      where: { user: { id: userId } },
+      where: { user: { id: Not(userId) } },
       relations: ['user'],
       order: { created_at: 'DESC' },
       take: limit + 1,

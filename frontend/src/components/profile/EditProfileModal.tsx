@@ -43,6 +43,8 @@ interface EditProfileModalProps {
   userByID: any;
   avatarPreview: string;
   avatarFile: File | undefined;
+  setAvatarFile: (file: File | undefined) => void;
+  setAvatarPreview: (preview: string) => void;
 }
 
 export const EditProfileModal = ({
@@ -51,6 +53,8 @@ export const EditProfileModal = ({
   userByID,
   avatarPreview,
   avatarFile,
+  setAvatarFile,
+  setAvatarPreview,
 }: EditProfileModalProps) => {
   const { toast } = useToast();
   const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
@@ -60,6 +64,18 @@ export const EditProfileModal = ({
     full_name: userByID?.data?.full_name || '',
     bio: userByID?.data?.bio || '',
     privacy: (userByID?.data?.privacy as PrivacyType) || 'public',
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const onSubmit = async (formData: ProfileFormValues) => {
@@ -123,6 +139,13 @@ export const EditProfileModal = ({
                   >
                     Change Avatar
                   </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
                 </div>
 
                 <FormField
