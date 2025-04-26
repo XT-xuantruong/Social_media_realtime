@@ -4,6 +4,8 @@ import { useInView } from 'react-intersection-observer';
 import FormCreatePost from '@/components/post/FormCreatePost';
 import PostItem from '@/components/post/PostItem';
 import { useGetMyPostsQuery } from '@/services/graphql/postServicesGQL';
+import { RootState } from '@/stores';
+import { useSelector } from 'react-redux';
 
 interface PostsSectionProps {
   userId: string;
@@ -13,6 +15,7 @@ export const PostsSection = ({ userId }: PostsSectionProps) => {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const { data, isLoading, isFetching, refetch } = useGetMyPostsQuery({ limit, cursor, userId });
+  const me = useSelector((state: RootState) => state.auth.user);
 
   const { ref: inViewRef, inView } = useInView({
     threshold: 1.0,
@@ -44,7 +47,10 @@ export const PostsSection = ({ userId }: PostsSectionProps) => {
 
   return (
     <div>
-      <FormCreatePost onPostCreated={handlePostCreated} />
+      {
+        me?.id === userId && 
+        <FormCreatePost onPostCreated={handlePostCreated} />
+      }
       <div className="bg-white p-4 rounded-lg border mt-4 shadow">
         <h2 className="text-lg font-semibold mb-4">Posts</h2>
         {allPosts.length > 0 ? (
