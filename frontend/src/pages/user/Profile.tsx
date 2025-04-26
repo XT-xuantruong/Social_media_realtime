@@ -45,6 +45,13 @@ export default function ProfilePage() {
     { skip: !id || !me?.id }
   );
 
+  // Khởi tạo avatarPreview từ userByID khi dữ liệu tải xong
+  useEffect(() => {
+    if (userByID?.data?.avatar_url) {
+      setAvatarPreview(userByID.data.avatar_url);
+    }
+  }, [userByID]);
+
   useEffect(() => {
     if (friendOfMe?.items) {
       const initialStatuses: { [key: string]: 'add' | 'sent' | 'friend' } = {};
@@ -102,6 +109,8 @@ export default function ProfilePage() {
         userByID={userByID}
         avatarPreview={avatarPreview}
         avatarFile={avatarFile}
+        setAvatarFile={setAvatarFile} // Truyền prop setAvatarFile
+        setAvatarPreview={setAvatarPreview} // Truyền prop setAvatarPreview
       />
 
       <ProfileTabs userId={id as string}>
