@@ -37,6 +37,7 @@ export const notificationServicesGQL = baseGraphqlApi.injectEndpoints({
         variables: { limit, cursor },
       }),
       transformResponse: (response: any) => response.getNotifications,
+      providesTags: ['Notifications'],
     }),
 
     markNotificationAsRead: builder.mutation<any, { notificationId: string }>({
@@ -52,6 +53,7 @@ export const notificationServicesGQL = baseGraphqlApi.injectEndpoints({
         variables: { notificationId },
       }),
       transformResponse: (response: any) => response.markNotificationAsRead,
+      invalidatesTags: ['Notifications'],
     }),
   }),
 });
