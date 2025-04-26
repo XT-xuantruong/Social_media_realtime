@@ -86,6 +86,7 @@ export const baseGraphqlApi = createApi({
     'ChatRooms',
     'Messages',
     'Users',
+    'Notifications',
   ],
   endpoints: () => ({}),
 });

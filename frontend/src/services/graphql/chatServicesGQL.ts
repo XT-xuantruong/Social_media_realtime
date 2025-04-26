@@ -94,7 +94,7 @@ export const chatServicesGQL = baseGraphqlApi.injectEndpoints({
       transformResponse: (response: {
         getMessages: PaginatedMessagesResponse;
       }) => response.getMessages,
-      providesTags: (result, error, { roomId }) => [
+      providesTags: (_result, _error, { roomId }) => [
         { type: 'Messages', id: roomId },
       ],
     }),
@@ -131,7 +131,7 @@ export const chatServicesGQL = baseGraphqlApi.injectEndpoints({
       }),
       transformResponse: (response: { sendMessage: { data: Message } }) =>
         response.sendMessage.data,
-      invalidatesTags: (result, error, { roomId }) => [
+      invalidatesTags: (_result, _error, { roomId }) => [
         { type: 'Messages', id: roomId },
       ],
     }),
