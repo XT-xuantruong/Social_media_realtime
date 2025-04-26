@@ -29,7 +29,7 @@ import { UserInfo } from "@/interfaces/user";
 
 const createPostSchema = z.object({
   content: z.string().optional(),
-  visibility: z.enum(["public", "friends", "private"]),
+  visibility: z.enum(["public","private"]),
   files: z.array(z.instanceof(File)).max(5, "You can only upload a maximum of 5 images").optional(),
 }).refine(
   (data) => data.content?.trim() !== "" || (data.files && data.files.length > 0),
@@ -122,7 +122,6 @@ export default function FormCreatePost({ onPostCreated }: FormCreatePostProps) {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="public">Public</SelectItem>
-                            <SelectItem value="friends">Friends</SelectItem>
                             <SelectItem value="private">Only Me</SelectItem>
                           </SelectContent>
                         </Select>
