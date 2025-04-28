@@ -22,7 +22,6 @@ export class NotificationsResolver {
     if (!user) {
       throw new Error('User not authenticated');
     }
-    console.log('user no', user);
 
     const { notifications, hasNextPage, endCursor, total } =
       await this.notificationsService.getNotifications(

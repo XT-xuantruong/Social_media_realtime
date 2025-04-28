@@ -32,7 +32,6 @@ export class CommentsResolver {
     if (!user) {
       throw new Error('User not authenticated');
     }
-    console.log(user);
 
     return this.commentsService.deleteComment(commentId, user.userId);
   }

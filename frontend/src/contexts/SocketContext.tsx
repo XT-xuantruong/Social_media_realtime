@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/stores';
 import { SocketService } from '@/services/socket/socketService';
@@ -11,8 +17,12 @@ interface SocketContextType {
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const accessToken = useSelector((state: RootState) => state.auth.token?.accessToken || '');
-  const [socketService, setSocketService] = useState<SocketService | null>(null);
+  const accessToken = useSelector(
+    (state: RootState) => state.auth.token?.accessToken || ''
+  );
+  const [socketService, setSocketService] = useState<SocketService | null>(
+    null
+  );
   const [connectionStatus, setConnectionStatus] = useState<
     'connecting' | 'connected' | 'error' | 'disconnected'
   >('disconnected');
@@ -23,11 +33,15 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       service.connect();
       setSocketService(service);
       setConnectionStatus(service.getConnectionStatus());
-      console.log('Access Token:', accessToken);
-      console.log('Initial Socket Connection Status:', service.getConnectionStatus());
+      console.log(
+        'Initial Socket Connection Status:',
+        service.getConnectionStatus()
+      );
 
       // Đăng ký callback để cập nhật trạng thái
-      const handleStatusChange = (status: 'connecting' | 'connected' | 'error' | 'disconnected') => {
+      const handleStatusChange = (
+        status: 'connecting' | 'connected' | 'error' | 'disconnected'
+      ) => {
         setConnectionStatus(status);
         console.log('Socket Connection Status Updated:', status);
       };

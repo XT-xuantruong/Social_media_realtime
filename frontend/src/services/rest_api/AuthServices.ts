@@ -37,7 +37,6 @@ export const authServices = baseRestApi.injectEndpoints({
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           const { data: authData } = await queryFulfilled;
-          console.log('Login response:', authData);
 
           dispatch(
             setCredentials({
