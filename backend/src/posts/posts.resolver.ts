@@ -66,9 +66,15 @@ export class PostsResolver {
     @Args('limit', { type: () => Int }) limit: number,
     @Args('userId', { type: () => String }) userId: string,
     @Args('cursor', { type: () => String, nullable: true }) cursor?: string,
+    @CurrentUser() userReq?: any,
   ): Promise<PostsListResponse> {
     const { posts, hasNextPage, endCursor, total, likeCounts, commentCounts } =
-      await this.postsService.findMyPosts(limit, cursor, userId);
+      await this.postsService.findMyPosts(
+        limit,
+        cursor,
+        userReq.userId,
+        userId,
+      );
 
     return {
       message: 'Posts retrieved successfully',

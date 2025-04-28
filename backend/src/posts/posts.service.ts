@@ -123,6 +123,7 @@ export class PostsService {
     limit: number,
     cursor?: string,
     currentUserId?: string,
+    userId?: string,
   ): Promise<{
     posts: PostCustom[];
     hasNextPage: boolean;
@@ -144,7 +145,11 @@ export class PostsService {
       .leftJoinAndSelect('likes.user', 'likeUser')
       .leftJoinAndSelect('post.comments', 'comments')
       .leftJoinAndSelect('comments.user', 'commentUser')
-      .where('post.userId = :currentUserId', { currentUserId });
+      .where('post.userId = :userId', { userId });
+
+    if (userId !== currentUserId) {
+      query.andWhere('post.visibility != :private', { private: 'private' });
+    }
 
     if (cursor) {
       try {
