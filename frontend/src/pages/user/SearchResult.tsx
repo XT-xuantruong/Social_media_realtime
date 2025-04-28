@@ -17,7 +17,6 @@ export default function SearchResult() {
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
 
-  // Gọi API tìm kiếm bài viết
   const {
     data: postData,
     isLoading: postLoading,
@@ -30,7 +29,6 @@ export default function SearchResult() {
     cursor: postCursor,
   });
 
-  // Gọi API tìm kiếm người dùng
   const {
     data: userData,
     isLoading: userLoading,
@@ -113,7 +111,12 @@ export default function SearchResult() {
         </div>
       ) : (
         <>
-          <UserSearchResult users={allUsers} userRef={userRef} isFetching={userFetching} hasNextPage={userData?.pageInfo.hasNextPage || false} />
+          <UserSearchResult
+            users={allUsers}
+            userRef={userRef}
+            isFetching={userFetching}
+            hasNextPage={userData?.pageInfo.hasNextPage || false}
+          />
           <PostSearchResult posts={allPosts} />
 
           {isFetching && !userFetching && (

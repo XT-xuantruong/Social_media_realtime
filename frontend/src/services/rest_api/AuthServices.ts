@@ -84,7 +84,6 @@ export const authServices = baseRestApi.injectEndpoints({
         message: response.message,
         status: response.status,
       }),
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
@@ -143,8 +142,7 @@ export const authServices = baseRestApi.injectEndpoints({
         message: response.message,
         status: response.status,
       }),
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+      async onQueryStarted(_, { queryFulfilled }) {
         try {
           await queryFulfilled;
         } catch (error) {
