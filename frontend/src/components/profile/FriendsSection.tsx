@@ -18,7 +18,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useSendFriendRequestMutation, useUnfriendMutation } from '@/services/graphql/friendServicesGQL';
+import {
+  useSendFriendRequestMutation,
+  useUnfriendMutation,
+} from '@/services/graphql/friendServicesGQL';
 import { PaginatedResponse } from '@/interfaces/friend';
 import { Dispatch, SetStateAction } from 'react'; // Import SetStateAction
 
@@ -46,6 +49,9 @@ export const FriendsSection = ({
   const me = useSelector((state: RootState) => state.auth.user);
   const [sendFriendRequest] = useSendFriendRequestMutation();
   const [removeFriend] = useUnfriendMutation();
+
+  const filteredFriends =
+    friends?.items?.filter((friend: any) => friend.id !== me?.id) || [];
 
   const handleSendFriendRequestInList = async (friendId: string) => {
     if (!friendId || !me?.id) {
@@ -111,84 +117,87 @@ export const FriendsSection = ({
       <h2 className="text-lg font-semibold mb-4">Friends</h2>
       <Table>
         <TableBody>
-          {friends?.items
-            .filter((friend: any) => friend.id !== userId)
-            .map((friend: any) => {
-              const friendId = friend.friendId;
-              const status = friendStatuses[friendId] || 'add';
-              return (
-                <TableRow key={friendId} className="border-gray-200">
-                  <Link to={`/profile/${friend.id}`}>
-                    <TableCell className="font-medium">
-                      <Avatar className="w-10 h-10 rounded-full">
-                        <AvatarImage src={friend.avatar_url} />
-                        <AvatarFallback>
-                          {friend.full_name?.[0] || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell className="text-black">{friend.full_name}</TableCell>
-                  </Link>
-                  <TableCell className="text-right">
-                    <div className="space-x-2">
-                      {userId !== me?.id ? (
-                        <>
-                          {status === 'friend' ? (
-                            <Button className="bg-gray-200 hover:bg-gray-300 text-black font-semibold rounded">
-                              <Users className="w-4 h-4 mr-2" />
-                              Friends
-                            </Button>
-                          ) : status === 'sent' ? (
-                            <Button className="bg-gray-200 hover:bg-gray-300 text-black font-semibold rounded">
-                              <SendHorizontal className="w-4 h-4 mr-2" />
-                              Sent
-                            </Button>
-                          ) : (
-                            <Button
-                              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded"
-                              onClick={() => handleSendFriendRequestInList(friendId)}
-                            >
-                              <UserRoundPlus className="w-4 h-4 mr-2" />
-                              Add Friend
-                            </Button>
-                          )}
-                        </>
-                      ) : (
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button className="bg-gray-200 hover:bg-gray-300 text-black font-semibold rounded">
-                              <UserRoundX className="w-4 h-4 mr-2" />
-                              Unfriend
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="bg-white text-black border-gray-300">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Are you sure you want to remove this friend?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription className="text-gray-600">
-                                This action cannot be undone. You and this user will no longer be connected as friends.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel className="bg-gray-200 text-black hover:bg-gray-300">
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-blue-500 hover:bg-blue-600 text-white"
-                                onClick={() => handleremove(friend.friendshipId)}
-                              >
-                                Continue
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      )}
-                    </div>
+          {filteredFriends.map((friend: any) => {
+            const friendId = friend.friendId;
+            const status = friendStatuses[friendId] || 'add';
+            return (
+              <TableRow key={friendId} className="border-gray-200">
+                <Link to={`/profile/${friend.id}`}>
+                  <TableCell className="font-medium">
+                    <Avatar className="w-10 h-10 rounded-full">
+                      <AvatarImage src={friend.avatar_url} />
+                      <AvatarFallback>
+                        {friend.full_name?.[0] || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
                   </TableCell>
-                </TableRow>
-              );
-            })}
+                  <TableCell className="text-black">
+                    {friend.full_name}
+                  </TableCell>
+                </Link>
+                <TableCell className="text-right">
+                  <div className="space-x-2">
+                    {userId !== me?.id ? (
+                      <>
+                        {status === 'friend' ? (
+                          <Button className="bg-gray-200 hover:bg-gray-300 text-black font-semibold rounded">
+                            <Users className="w-4 h-4 mr-2" />
+                            Friends
+                          </Button>
+                        ) : status === 'sent' ? (
+                          <Button className="bg-gray-200 hover:bg-gray-300 text-black font-semibold rounded">
+                            <SendHorizontal className="w-4 h-4 mr-2" />
+                            Sent
+                          </Button>
+                        ) : (
+                          <Button
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded"
+                            onClick={() =>
+                              handleSendFriendRequestInList(friendId)
+                            }
+                          >
+                            <UserRoundPlus className="w-4 h-4 mr-2" />
+                            Add Friend
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button className="bg-gray-200 hover:bg-gray-300 text-black font-semibold rounded">
+                            <UserRoundX className="w-4 h-4 mr-2" />
+                            Unfriend
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white text-black border-gray-300">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you sure you want to remove this friend?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-600">
+                              This action cannot be undone. You and this user
+                              will no longer be connected as friends.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-gray-200 text-black hover:bg-gray-300">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                              onClick={() => handleremove(friend.friendshipId)}
+                            >
+                              Continue
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

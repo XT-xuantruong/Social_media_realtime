@@ -53,14 +53,12 @@ export class AuthController {
   }
 
   @Post('auth/refresh')
-  @UseGuards(JwtRefreshGuard) // Yêu cầu refresh token
+  @UseGuards(JwtRefreshGuard)
   @UsePipes(new ValidationPipe())
   async refreshToken(
     @Body('refreshToken') refreshToken: string,
     @Req() req,
   ): Promise<ResponseDto<any>> {
-    console.log(req);
-
     return await this.authService.refreshToken(refreshToken, req.user.userId);
   }
 

@@ -69,7 +69,10 @@ export const ProfileHeader = ({
 
   useEffect(() => {
     friendOfMe?.items.forEach((item: any) => {
-      if (item.id === userByID?.data?.id || item.friendId === userByID?.data?.id) {
+      if (
+        item.id === userByID?.data?.id ||
+        item.friendId === userByID?.data?.id
+      ) {
         if (item.friend_status === 'pending') {
           setFriendStatus('sent');
         }
@@ -97,7 +100,7 @@ export const ProfileHeader = ({
       </Avatar>
       <div className="ml-4 flex-1">
         <h1 className="text-3xl font-bold">{userByID?.data?.full_name}</h1>
-        <p className="text-gray-600">{friendOfMe?.items?.length || 0} friends</p>
+        {/* <p className="text-gray-600">{friendOfMe?.items?.length || 0} friends</p> */}
       </div>
       <div className="flex space-x-2">
         {userByID?.data?.id === me?.id ? (

@@ -38,7 +38,6 @@ export class UsersController {
     @Param('id') id: string,
     @Req() req,
   ): Promise<ResponseDto<User>> {
-
     const user = await this.usersService.findById(id);
     const { password, ...userWithoutPassword } = user;
     return new ResponseDto<User>(
@@ -60,9 +59,6 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<ResponseDto<User>> {
-    console.log('File received:', file);
-    console.log('Body received:', updateUserDto);
-
     const updatedUser = await this.usersService.updateMe(
       req.user.userId,
       updateUserDto,

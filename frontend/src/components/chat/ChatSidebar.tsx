@@ -9,7 +9,9 @@ import { useSocket } from '@/contexts/SocketContext';
 
 export default function ChatSidebar() {
   const dispatch = useDispatch<AppDispatch>();
-  const selectedRoom = useSelector((state: RootState) => state.chat.selectedRoom);
+  const selectedRoom = useSelector(
+    (state: RootState) => state.chat.selectedRoom
+  );
   const allMessages = useSelector((state: RootState) => state.chat.allMessages);
   const { socketService, connectionStatus } = useSocket();
   const { data, isLoading, error } = useGetChatRoomsQuery({
@@ -19,18 +21,18 @@ export default function ChatSidebar() {
 
   const handleSelectRoom = (room: ChatRoom) => {
     if (!socketService || connectionStatus !== 'connected') {
-      console.warn('Cannot select room: Socket not connected. Status:', connectionStatus);
+      console.warn(
+        'Cannot select room: Socket not connected. Status:',
+        connectionStatus
+      );
       return;
     }
 
-    
     // Join room và lưu vào Redux
     socketService.joinRoom(room.room_id);
-    console.log('Joined room:', room.room_id);
     dispatch(setSelectedRoom(room));
     dispatch(setMessages({ roomId: room.room_id, messages: [] }));
   };
-
 
   if (isLoading) {
     return (
@@ -82,7 +84,7 @@ export default function ChatSidebar() {
 
   return (
     <div className="w-80 bg-white p-4 border-l h-[calc(100vh-3.5rem)]">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Tin nhắn</h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">Tin nhắn</h3>
       {connectionStatus === 'connecting' && (
         <p className="text-gray-600">Đang kết nối đến server chat...</p>
       )}
@@ -90,7 +92,7 @@ export default function ChatSidebar() {
         {rooms.map((room) => {
           const messages = allMessages[room.room_id] || [];
           const hasNewMessage = messages.some(
-            (msg) => new Date(msg.created_at) > new Date(room.created_at),
+            (msg) => new Date(msg.created_at) > new Date(room.created_at)
           );
 
           return (
