@@ -5,7 +5,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { TabsContent } from '@/components/ui/tabs';
 import { useGetByIdQuery } from '@/services/rest_api/UserSerivces';
-import { useGetFriendsQuery, useGetFriendRequestsQuery } from '@/services/graphql/friendServicesGQL';
+import {
+  useGetFriendsQuery,
+  useGetFriendRequestsQuery,
+} from '@/services/graphql/friendServicesGQL';
 import { PaginatedResponse } from '@/interfaces/friend';
 import { UserInfo } from '@/interfaces/user';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
@@ -23,10 +26,15 @@ export default function ProfilePage() {
   const { id } = useParams();
   const [avatarFile, setAvatarFile] = useState<File | undefined>(undefined);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
-  const [friendStatus, setFriendStatus] = useState<'add' | 'sent' | 'friend'>('add');
+  const [friendStatus, setFriendStatus] = useState<'add' | 'sent' | 'friend'>(
+    'add'
+  );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [friends, setFriend] = useState<PaginatedResponse<UserInfo> | null>(null);
-  const [friendRequests, setFriendRequests] = useState<PaginatedResponse<any> | null>(null);
+  const [friends, setFriend] = useState<PaginatedResponse<UserInfo> | null>(
+    null
+  );
+  const [friendRequests, setFriendRequests] =
+    useState<PaginatedResponse<any> | null>(null);
 
   const me = useSelector((state: RootState) => state.auth.user);
   const { data: myFriendsData, refetch: refetchMyFriends } = useGetFriendsQuery(
@@ -35,17 +43,19 @@ export default function ProfilePage() {
   );
   const friendOfMe = myFriendsData;
 
-  const { data: userByID, isLoading: isFetchingUser } = useGetByIdQuery(id as string);
+  const { data: userByID, isLoading: isFetchingUser } = useGetByIdQuery(
+    id as string
+  );
   const { data: friendsData, refetch: refetchFriends } = useGetFriendsQuery(
     { limit: 10, offset: 0, currentUserId: id || '' },
     { skip: !id || !userByID?.data?.id }
   );
-  const { data: friendRequestsData, refetch: refetchFriendRequests } = useGetFriendRequestsQuery(
-    { limit: 10, offset: 0, currentUserId: id || '' },
-    { skip: !id || !me?.id }
-  );
+  const { data: friendRequestsData, refetch: refetchFriendRequests } =
+    useGetFriendRequestsQuery(
+      { limit: 10, offset: 0, currentUserId: id || '' },
+      { skip: !id || !me?.id }
+    );
 
-  // Khởi tạo avatarPreview từ userByID khi dữ liệu tải xong
   useEffect(() => {
     if (userByID?.data?.avatar_url) {
       setAvatarPreview(userByID.data.avatar_url);
