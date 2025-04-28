@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Post } from '@/interfaces/post';
 import { baseRestApi } from './baseRestApi';
 import { ApiResponse } from '@/interfaces/apiResponse';
